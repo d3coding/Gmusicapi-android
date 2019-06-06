@@ -1,0 +1,58 @@
+<resources>
+    <string name="app_name">Gmusicapi</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Mateus Junior</string>
+    <string name="nav_header_subtitle">d3coding@gmail.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="login_hint_username">Username</string>
+    <string name="login_hint_password">Password</string>
+    <string name="check_box_android_id">Use different Android ID</string>
+    <string name="login_hint_android_id">Android ID</string>
+    <string name="login_button_login">Login</string>
+
+    <string name="menu_home">Home</string>
+    <string name="menu_gallery">Gallery</string>
+    <string name="menu_slideshow">Slideshow</string>
+    <string name="menu_tools">Tools</string>
+    <string name="menu_share">Share</string>
+    <string name="menu_send">Send</string>
+
+    <string name="preferences_user">preferences_user</string>
+    <string name="tag2tag">tag2tag</string>
+    <string name="tag3tag">tag3tag</string>
+    <string name="tag4tag">tag4tag</string>
+    <string name="tag5tag">tag5tag</string>
+    <string name="tag6tag">tag6tag</string>
+
+    <string name="nav_home">Home</string>
+    <string name="nav_download">Download</string>
+    <string name="nav_advanced">Advanced</string>
+    <string name="nav_config">Config</string>
+    <string name="nav_s_other">Ohter</string>
+    <string name="nav_online">Online</string>
+    <string name="nav_log">Log</string>
+    <string name="nav_refresh">Refresh</string>
+    <string name="nav_recreate">Recreate</string>
+    <string name="nav_info">Info</string>
+
+    <string name="tab_music">Music</string>
+    <string name="tab_artist">Artist</string>
+    <string name="tab_album">Album</string>
+    <string name="tab_genre">Genre</string>
+
+    <string name="login_alert_fill_in">Please fill in all fields!</string>
+
+    <string name="ask_logout">Logout?</string>
+    <string name="ask_exit">Leave?</string>
+
+    <string name="box_exit">exit</string>
+    <string name="box_confirm">confirm</string>
+
+    <string name="token">token</string>
+
+    <string name="act_main">MainActivity</string>
+    <string name="act_login">Login</string>
+</resources>
