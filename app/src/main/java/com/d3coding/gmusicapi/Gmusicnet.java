@@ -21,13 +21,12 @@ import svarzee.gps.gpsoauth.Gpsoauth;
 
 public class Gmusicnet extends AsyncTask<String, Void, Void> {
 
-    private List<Chunck> chunckList;
+    private List<Chunk> chunkList;
+    private Context context;
 
     Gmusicnet(Context context) {
         this.context = context;
     }
-
-    private Context context;
 
     @Override
     protected Void doInBackground(String... strings) {
@@ -50,7 +49,7 @@ public class Gmusicnet extends AsyncTask<String, Void, Void> {
             System.out.println("#004");
             System.out.println("# Size: " + listTrack.size());
 
-            chunckList = new ArrayList<>();
+            chunkList = new ArrayList<>();
 
             for (int x = 0; x < listTrack.size(); ++x) {
                 String id, title, artist, composer, album, albumArtist, genre, albumArtUrl, albumId, artistId, comment;
@@ -115,15 +114,15 @@ public class Gmusicnet extends AsyncTask<String, Void, Void> {
                 else
                     totalTrackCount = 0;
 
-                chunckList.add(new Chunck(id, title, artist, composer, album, albumArtist, year, trackNumber,
+                chunkList.add(new Chunk(id, title, artist, composer, album, albumArtist, year, trackNumber,
                         genre, albumArtUrl, estimatedSize, 100L, albumId, artistId, comment, totalTrackCount));
             }
 
             System.out.println("#005");
 
             Gmusicdb gmusicdb = new Gmusicdb(context);
-            for (int x = 0; x < chunckList.size(); ++x)
-                gmusicdb.insertIfNotExists(chunckList.get(x));
+            for (int x = 0; x < chunkList.size(); ++x)
+                gmusicdb.insertIfNotExists(chunkList.get(x));
 
             System.out.println("#006");
         } catch (IOException e) {
@@ -141,7 +140,7 @@ public class Gmusicnet extends AsyncTask<String, Void, Void> {
         return null;
     }
 
-    public class Chunck {
+    class Chunk {
 
         String id, title, artist, composer, album, albumArtist;
         int year, trackNumber;
@@ -150,8 +149,8 @@ public class Gmusicnet extends AsyncTask<String, Void, Void> {
         String albumId, artistId, comment;
         int totalTrackCount;
 
-        Chunck(String id, String title, String artist, String composer, String album, String albumArtist, int year, int trackNumber,
-               String genre, String albumArtUrl, Long estimatedSize, Long time, String albumId, String artistId, String comment, int totalTrackCount) {
+        Chunk(String id, String title, String artist, String composer, String album, String albumArtist, int year, int trackNumber,
+              String genre, String albumArtUrl, Long estimatedSize, Long time, String albumId, String artistId, String comment, int totalTrackCount) {
 
             this.id = id;
             this.title = title;

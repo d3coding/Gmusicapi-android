@@ -92,7 +92,7 @@ public class Gmusicdb extends SQLiteOpenHelper {
         }
     }
 
-    long insertIfNotExists(Gmusicnet.Chunck chunk) {
+    long insertIfNotExists(Gmusicnet.Chunk chunk) {
         long ret = 0L;
         if (getCount(chunk.id) == 0) {
             ContentValues values = new ContentValues();
