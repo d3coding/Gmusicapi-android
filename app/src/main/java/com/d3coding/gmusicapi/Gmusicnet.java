@@ -1,8 +1,6 @@
 package com.d3coding.gmusicapi;
 
 import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.AsyncTask;
 
 import com.github.felixgail.gplaymusic.api.GPlayMusic;
@@ -16,51 +14,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.concurrent.TimeUnit;
 
 import svarzee.gps.gpsoauth.AuthToken;
 import svarzee.gps.gpsoauth.Gpsoauth;
 
 public class Gmusicnet extends AsyncTask<String, Void, Void> {
 
-    public class Chunck {
+    private List<Chunck> chunckList;
 
-        public String id, title, artist, composer, album, albumArtist;
-        public int year, trackNumber;
-        public String genre, albumArtUrl;
-        public Long estimatedSize, time;
-        public String albumId, artistId, comment;
-        public int totalTrackCount;
-
-        Chunck(String id, String title, String artist, String composer, String album, String albumArtist, int year, int trackNumber,
-               String genre, String albumArtUrl, Long estimatedSize, Long time, String albumId, String artistId, String comment, int totalTrackCount) {
-
-            this.id = id;
-            this.title = title;
-            this.artist = artist;
-            this.composer = composer;
-            this.album = album;
-            this.albumArtist = albumArtist;
-            this.year = year;
-            this.trackNumber = trackNumber;
-            this.genre = genre;
-            this.albumArtUrl = albumArtUrl;
-            this.estimatedSize = estimatedSize;
-            this.time = time;
-            this.albumId = albumId;
-            this.artistId = artistId;
-            this.comment = comment;
-            this.totalTrackCount = totalTrackCount;
-
-        }
-    }
-
-    List<Chunck> chunckList;
-
-    private Context context;
-
-    public Gmusicnet(Context context) {
+    Gmusicnet(Context context) {
         this.context = context;
     }
+
+    private Context context;
 
     @Override
     protected Void doInBackground(String... strings) {
@@ -102,7 +69,11 @@ public class Gmusicnet extends AsyncTask<String, Void, Void> {
                 // albumArtist
                 albumArtist = listTrack.get(x).getAlbumArtist();
                 // year
-                year = listTrack.get(x).getYear().getAsInt();
+                OptionalInt optionalInt = listTrack.get(x).getYear();
+                if (optionalInt.isPresent())
+                    year = optionalInt.getAsInt();
+                else
+                    year = 0;
                 // trackNumber
                 trackNumber = listTrack.get(x).getTrackNumber();
                 // genre
@@ -118,25 +89,17 @@ public class Gmusicnet extends AsyncTask<String, Void, Void> {
                 else
                     albumArtUrl = "";
                 // estimatedSize
-                // estimatedSize =
-                try {
-                    estimatedSize = listTrack.get(x).getEstimatedSize();
-                } catch (NumberFormatException e) {
-                    e.printStackTrace();
-                    System.out.println("Code: ###" + id + "###");
-                    System.out.println("Code: ###" + artist + "###");
-                    System.out.println("Code: ###" + album + "###");
-                    System.out.println("Code: ###" + title + "###");
-                    estimatedSize = 0L;
-                }
+                estimatedSize = listTrack.get(x).getEstimatedSize();
                 // albumId
                 albumId = listTrack.get(x).getAlbumId();
                 // artistId
                 Optional<List<String>> optionalArtistId = listTrack.get(x).getArtistId();
                 if (optionalArtistId.isPresent()) {
-                    artistId = optionalArtistId.get().get(0);
+                    StringBuilder stringBuilder = new StringBuilder(optionalArtistId.get().get(0));
                     for (int y = 1; y < optionalArtistId.get().size(); ++y)
-                        artistId += optionalArtistId.get().get(y);
+                        stringBuilder.append(optionalArtistId.get().get(y));
+                    artistId = stringBuilder.toString();
+
                 } else
                     artistId = "";
                 // comment
@@ -152,7 +115,6 @@ public class Gmusicnet extends AsyncTask<String, Void, Void> {
                 else
                     totalTrackCount = 0;
 
-                // TODO
                 chunckList.add(new Chunck(id, title, artist, composer, album, albumArtist, year, trackNumber,
                         genre, albumArtUrl, estimatedSize, 100L, albumId, artistId, comment, totalTrackCount));
             }
@@ -173,7 +135,41 @@ public class Gmusicnet extends AsyncTask<String, Void, Void> {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        context.getSharedPreferences(context.getString(R.string.preferences_user), Context.MODE_PRIVATE).edit()
+                .putLong(context.getString(R.string.last_update), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())).apply();
 
         return null;
+    }
+
+    public class Chunck {
+
+        String id, title, artist, composer, album, albumArtist;
+        int year, trackNumber;
+        String genre, albumArtUrl;
+        Long estimatedSize, time;
+        String albumId, artistId, comment;
+        int totalTrackCount;
+
+        Chunck(String id, String title, String artist, String composer, String album, String albumArtist, int year, int trackNumber,
+               String genre, String albumArtUrl, Long estimatedSize, Long time, String albumId, String artistId, String comment, int totalTrackCount) {
+
+            this.id = id;
+            this.title = title;
+            this.artist = artist;
+            this.composer = composer;
+            this.album = album;
+            this.albumArtist = albumArtist;
+            this.year = year;
+            this.trackNumber = trackNumber;
+            this.genre = genre;
+            this.albumArtUrl = albumArtUrl;
+            this.estimatedSize = estimatedSize;
+            this.time = time;
+            this.albumId = albumId;
+            this.artistId = artistId;
+            this.comment = comment;
+            this.totalTrackCount = totalTrackCount;
+
+        }
     }
 }

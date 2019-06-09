@@ -37,7 +37,7 @@ public class MainActivity extends AppCompatActivity
 
         if (mPresets.contains(getString(R.string.token))) {
 
-            setContentView(R.layout.activity_main);
+            setContentView(R.layout.ac_all);
 
             SectionsPagerAdapter sectionsPagerAdapter = new SectionsPagerAdapter(this, getSupportFragmentManager());
             ViewPager viewPager = findViewById(R.id.view_pager);
@@ -55,6 +55,10 @@ public class MainActivity extends AppCompatActivity
             drawer.addDrawerListener(toggle);
             toggle.syncState();
             navigationView.setNavigationItemSelectedListener(this);
+
+            if (!mPresets.contains(getString(R.string.last_update)))
+                refreshDB();
+
         } else {
             startActivityForResult(new Intent(this, Login.class), LOG_IN_ACTIVITY);
         }
@@ -93,6 +97,11 @@ public class MainActivity extends AppCompatActivity
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
+        } else if (id == R.id.action_logout) {
+            getApplicationContext().getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE).edit().remove(getString(R.string.token)).apply();
+            getApplicationContext().deleteDatabase(Gmusicdb.DATABASE_NAME);
+            recreate();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -110,21 +119,25 @@ public class MainActivity extends AppCompatActivity
                     recreate();
                 } else if (resultCode == RESULT_CANCELED) {
                     finish();
-                } else if (resultCode == RESULT_ERROR) {
-                    recreate();
                 }
             }
             break;
         }
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
+    private void refreshDB() {
+        SharedPreferences mPresets = getApplicationContext().getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE);
+        new Gmusicnet(getApplicationContext()).execute(mPresets.getString(getString(R.string.token), ""));
+    }
+
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_home) {
+        if (id == R.id.nav_all) {
+            Toast.makeText(getApplicationContext(), "NULL", Toast.LENGTH_SHORT).show();
+        } else if (id == R.id.nav_offline) {
             Toast.makeText(getApplicationContext(), "NULL", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_download) {
             Toast.makeText(getApplicationContext(), "NULL", Toast.LENGTH_SHORT).show();
@@ -132,18 +145,12 @@ public class MainActivity extends AppCompatActivity
             Toast.makeText(getApplicationContext(), "NULL", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_config) {
             Toast.makeText(getApplicationContext(), "NULL", Toast.LENGTH_SHORT).show();
-        } else if (id == R.id.nav_online) {
-            Toast.makeText(getApplicationContext(), "NULL", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_log) {
             Toast.makeText(getApplicationContext(), "NULL", Toast.LENGTH_SHORT).show();
             mState = true;
             supportInvalidateOptionsMenu();
         } else if (id == R.id.nav_refresh) {
-
-            SharedPreferences mPresets = getApplicationContext().getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE);
-
-            Gmusicnet gmusicnet = new Gmusicnet(getApplicationContext());
-            gmusicnet.execute(mPresets.getString(getString(R.string.token),""));
+            refreshDB();
         } else if (id == R.id.nav_recreate) {
             recreate();
         } else if (id == R.id.nav_info) {

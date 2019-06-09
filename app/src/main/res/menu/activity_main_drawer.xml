@@ -5,13 +5,17 @@
 
     <group android:checkableBehavior="single">
         <item
-            android:id="@+id/nav_home"
+            android:id="@+id/nav_all"
             android:icon="@drawable/ic_menu_manage"
-            android:title="@string/nav_home" />
+            android:title="@string/nav_all" />
         <item
             android:id="@+id/nav_download"
             android:icon="@drawable/ic_menu_manage"
             android:title="@string/nav_download" />
+        <item
+            android:id="@+id/nav_offline"
+            android:icon="@drawable/ic_menu_manage"
+            android:title="@string/nav_offline" />
         <item
             android:id="@+id/nav_advanced"
             android:icon="@drawable/ic_menu_manage"
@@ -24,10 +28,6 @@
 
     <item android:title="@string/nav_s_other">
         <menu>
-            <item
-                android:id="@+id/nav_online"
-                android:icon="@drawable/ic_menu_manage"
-                android:title="@string/nav_online" />
             <item
                 android:id="@+id/nav_log"
                 android:icon="@drawable/ic_menu_manage"

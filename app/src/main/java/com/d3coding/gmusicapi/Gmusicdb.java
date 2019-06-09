@@ -14,7 +14,7 @@ import java.util.List;
 public class Gmusicdb extends SQLiteOpenHelper {
 
     private static final int DATABASE_VERSION = 1;
-    private static final String DATABASE_NAME = "MusicData.db";
+    static final String DATABASE_NAME = "MusicData.db";
     private static final String TABLE = "music";
     private static final String id = "id";
     private static final String uid = "uid";
@@ -73,7 +73,7 @@ public class Gmusicdb extends SQLiteOpenHelper {
         onUpgrade(db, oldVersion, newVersion);
     }
 
-    public int getCount(String text) {
+    private int getCount(String text) {
         Cursor c = null;
         SQLiteDatabase db = null;
         try {
@@ -92,8 +92,8 @@ public class Gmusicdb extends SQLiteOpenHelper {
         }
     }
 
-    public Long insertIfNotExists(Gmusicnet.Chunck chunk) {
-        Long ret = 0L;
+    long insertIfNotExists(Gmusicnet.Chunck chunk) {
+        long ret = 0L;
         if (getCount(chunk.id) == 0) {
             ContentValues values = new ContentValues();
             SQLiteDatabase db = getWritableDatabase();
@@ -137,8 +137,8 @@ public class Gmusicdb extends SQLiteOpenHelper {
         db.close();
         try {
             cursor.close();
-        } catch (NullPointerException ex) {
-            throw ex;
+        } catch (NullPointerException e) {
+            e.printStackTrace();
         }
 
         return ret;
@@ -164,8 +164,8 @@ public class Gmusicdb extends SQLiteOpenHelper {
         db.close();
         try {
             cursor.close();
-        } catch (NullPointerException ex) {
-            throw ex;
+        } catch (NullPointerException e) {
+            e.printStackTrace();
         }
 
         return ret;
@@ -190,8 +190,8 @@ public class Gmusicdb extends SQLiteOpenHelper {
         db.close();
         try {
             cursor.close();
-        } catch (NullPointerException ex) {
-            throw ex;
+        } catch (NullPointerException e) {
+            e.printStackTrace();
         }
 
         return ret;
@@ -216,8 +216,8 @@ public class Gmusicdb extends SQLiteOpenHelper {
         db.close();
         try {
             cursor.close();
-        } catch (NullPointerException ex) {
-            throw ex;
+        } catch (NullPointerException e) {
+            e.printStackTrace();
         }
 
         return ret;

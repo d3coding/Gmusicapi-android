@@ -9,9 +9,12 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import android.text.method.HideReturnsTransformationMethod;
+import android.text.method.PasswordTransformationMethod;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -26,62 +29,112 @@ import svarzee.gps.gpsoauth.Gpsoauth;
 
 public class Login extends AppCompatActivity {
 
+    private static final Uri sUri = Uri.parse("content://com.google.android.gsf.gservices");
+
+    private CheckBox checkBoxPass;
+    private CheckBox checkBoxAid;
+    private EditText editTextUser;
+    private EditText editTextPass;
+    private EditText editTextAndroid;
+    private Button button;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.login);
 
-        Toolbar mToolbar = findViewById(R.id.login_toolbar);
-        setSupportActionBar(mToolbar);
-
-        CheckBox checkBox = findViewById(R.id.id_check);
-        EditText editTextUser = findViewById(R.id.user);
-        EditText editTextPass = findViewById(R.id.pass);
-        EditText editTextAndroid = findViewById(R.id.android_id);
-        Button button = findViewById(R.id.login_bt);
+        checkBoxPass = findViewById(R.id.pass_check);
+        checkBoxAid = findViewById(R.id.id_check);
+        editTextUser = findViewById(R.id.user);
+        editTextPass = findViewById(R.id.pass);
+        editTextAndroid = findViewById(R.id.android_id);
+        button = findViewById(R.id.login_bt);
 
         editTextUser.requestFocus();
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
 
-        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    editTextAndroid.setVisibility(View.VISIBLE);
-                } else {
-                    editTextAndroid.setVisibility(View.GONE);
-                }
-            }
+        checkBoxPass.setOnCheckedChangeListener((CompoundButton buttonView, boolean isChecked) -> {
+            int selectionStart = editTextPass.getSelectionStart();
+            if (isChecked)
+                editTextPass.setTransformationMethod(HideReturnsTransformationMethod.getInstance());
+            else
+                editTextPass.setTransformationMethod(PasswordTransformationMethod.getInstance());
+            editTextPass.setSelection(selectionStart);
         });
 
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                if (checkBox.isChecked()) {
-                    if (!editTextUser.getText().equals("") && !editTextPass.getText().equals("")) {
-
-                        TokenGen tokenGen = new TokenGen(editTextUser.getText().toString(), editTextPass.getText().toString(), getGSFID(getApplicationContext()));
-                        tokenGen.execute();
-
-                    } else {
-                        (new AlertDialog.Builder(Login.this)).setMessage(getString(R.string.login_alert_fill_in)).setPositiveButton("OK", null).create().show();
-                    }
-                } else {
-                    if (!editTextUser.getText().equals("") && !editTextPass.getText().equals("") && !editTextAndroid.getText().equals("")) {
-
-                        TokenGen tokenGen = new TokenGen(editTextUser.getText().toString(), editTextPass.getText().toString(), editTextAndroid.getText().toString());
-                        tokenGen.execute();
-
-                    } else {
-                        (new AlertDialog.Builder(Login.this)).setMessage(getString(R.string.login_alert_fill_in)).setPositiveButton("OK", null).create().show();
-                    }
-                }
-
-            }
+        checkBoxAid.setOnCheckedChangeListener((CompoundButton buttonView, boolean isChecked) -> {
+            if (isChecked)
+                editTextAndroid.setVisibility(View.VISIBLE);
+            else
+                editTextAndroid.setVisibility(View.GONE);
         });
 
 
+        button.setOnClickListener((View v) -> {
+            if (checkBoxAid.isChecked()) {
+                if (!editTextUser.getText().toString().equals("") && !editTextPass.getText().toString().equals("") && !editTextAndroid.getText().toString().equals("")) {
+
+                    InputMethodManager im = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    im.hideSoftInputFromWindow(editTextPass.getWindowToken(), 0);
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(Login.this);
+                    ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.loading, null);
+                    builder.setView(vView);
+                    builder.setCancelable(false);
+                    final AlertDialog alert = builder.create();
+                    alert.show();
+
+                    TokenGen tokenGen = new TokenGen(editTextUser.getText().toString(), editTextPass.getText().toString(), editTextAndroid.getText().toString(), alert);
+                    tokenGen.execute();
+
+                } else {
+                    (new AlertDialog.Builder(Login.this)).setMessage(getString(R.string.login_alert_fill_in)).setPositiveButton("OK", null).create().show();
+                }
+
+            } else {
+                if (!editTextUser.getText().toString().equals("") && !editTextPass.getText().toString().equals("")) {
+
+                    InputMethodManager im = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    im.hideSoftInputFromWindow(editTextPass.getWindowToken(), 0);
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(Login.this);
+                    ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.loading, null);
+                    builder.setView(vView);
+                    builder.setCancelable(false);
+                    final AlertDialog alert = builder.create();
+                    alert.show();
+
+                    TokenGen tokenGen = new TokenGen(editTextUser.getText().toString(), editTextPass.getText().toString(), getGSFID(getApplicationContext()), alert);
+                    tokenGen.execute();
+
+                } else {
+                    (new AlertDialog.Builder(Login.this)).setMessage(getString(R.string.login_alert_fill_in)).setPositiveButton("OK", null).create().show();
+                }
+            }
+
+        });
+    }
+
+    private void loginSuccessful(String stringRet) {
+        Intent returnData = new Intent();
+        returnData.putExtra(getString(R.string.token), stringRet);
+        setResult(RESULT_OK, returnData);
+        finish();
+    }
+
+    private void loginError() {
+        (new AlertDialog.Builder(Login.this)).setMessage(getString(R.string.login_alert_error)).setPositiveButton(getString(R.string.box_ok), (DialogInterface dialog, int which) -> {
+            editTextPass.setText("");
+            ((InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE)).toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+        }).create().show();
+    }
+
+    @Override
+    public void onBackPressed() {
+        (new AlertDialog.Builder(Login.this)).setMessage(getString(R.string.ask_exit)).setPositiveButton(getString(R.string.box_exit), (DialogInterface dialog, int which) -> {
+            setResult(RESULT_CANCELED);
+            finish();
+        }).setNegativeButton(getString(R.string.box_cancel), null).create().show();
     }
 
     private class TokenGen extends AsyncTask<Void, Void, Void> {
@@ -92,11 +145,14 @@ public class Login extends AppCompatActivity {
         private String PASSWORD;
         private String ANDROIDID;
 
-        public TokenGen(String username, String password, String androidID) {
+        AlertDialog alertDialog;
+
+        TokenGen(String username, String password, String androidID, AlertDialog alertDialog) {
             super();
             this.USERNAME = username;
             this.PASSWORD = password;
             this.ANDROIDID = androidID;
+            this.alertDialog = alertDialog;
 
         }
 
@@ -113,43 +169,14 @@ public class Login extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Void result) {
+            alertDialog.cancel();
             if (authToken != null)
-                myMethod(authToken.getToken());
+                loginSuccessful(authToken.getToken());
             else
-                myMethod2();
+                loginError();
         }
+
     }
-
-    private void myMethod(String stringRet) {
-        Intent returnData = new Intent();
-        returnData.putExtra(getString(R.string.token), stringRet);
-        setResult(RESULT_OK, returnData);
-        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
-        finish();
-    }
-
-    private static final int RESULT_ERROR = -4;
-
-    private void myMethod2() {
-        setResult(RESULT_ERROR);
-        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
-        finish();
-    }
-
-    @Override
-    public void onBackPressed() {
-        (new AlertDialog.Builder(Login.this)).setMessage(getString(R.string.ask_exit)).setPositiveButton(getString(R.string.box_exit),
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        setResult(RESULT_CANCELED);
-                        finish();
-                    }
-                }
-        ).setNegativeButton(android.R.string.cancel, null).create().show();
-    }
-
-    private static final Uri sUri = Uri.parse("content://com.google.android.gsf.gservices");
 
     public static String getGSFID(Context context) {
         try {

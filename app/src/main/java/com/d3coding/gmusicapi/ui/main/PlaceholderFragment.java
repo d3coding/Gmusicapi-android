@@ -29,10 +29,9 @@ import java.util.List;
  */
 public class PlaceholderFragment extends Fragment {
 
-    private static final String ARG_SECTION_NUMBER = "section_number";
+    private static final String INDEX = "index";
+    int index = 1;
 
-    private static final int LOG_IN_ACTIVITY = 50;
-    private static final int CONTACT_ACTIVITY = 51;
     Gmusicdb db;
     private RecyclerView recyclerView;
     private List<MusicItems> ConvertList = new ArrayList<>();
@@ -41,7 +40,7 @@ public class PlaceholderFragment extends Fragment {
     public static PlaceholderFragment newInstance(int index) {
         PlaceholderFragment fragment = new PlaceholderFragment();
         Bundle bundle = new Bundle();
-        bundle.putInt(ARG_SECTION_NUMBER, index);
+        bundle.putInt(INDEX, index);
         fragment.setArguments(bundle);
         return fragment;
     }
@@ -50,19 +49,14 @@ public class PlaceholderFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null)
-            index = getArguments().getInt(ARG_SECTION_NUMBER);
+            index = getArguments().getInt(INDEX);
 
     }
 
-    int index = 1;
-
     @Override
-    public View onCreateView(
-            @NonNull LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         View root = inflater.inflate(R.layout.fragment_main2, container, false);
-
         recyclerView = root.findViewById(R.id.music_item);
 
         mAdapter = new MusicAdapter(ConvertList);
@@ -77,64 +71,49 @@ public class PlaceholderFragment extends Fragment {
         {
             if (db == null) {
                 db = new Gmusicdb(getContext());
-                if (index == 1) {
+                if (index == 1)
                     ConvertList.addAll(db.getMusicItemsTitle());
-                } else if (index == 2) {
+                else if (index == 2)
                     ConvertList.addAll(db.getMusicItemsArtist());
-                } else if (index == 3) {
+                else if (index == 3)
                     ConvertList.addAll(db.getMusicItemsAlbum());
-                } else if (index == 4) {
+                else if (index == 4)
                     ConvertList.addAll(db.getMusicItemsGenre());
-                }
+
             }
 
             mAdapter.notifyDataSetChanged();
 
         }
 
-        mAdapter.setOnItemClickListener(new MusicAdapter.OnItemClickListener() {
-            @Override
-            public void onItemClick(View view, int position) {
+        mAdapter.setOnItemClickListener((View view, int position) -> {
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
 
-                ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.music_info, null);
+            ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.music_info, null);
 
-                ImageView imageView = vView.findViewById(R.id.info_albumArt);
-                TextView textViewTitle = vView.findViewById(R.id.info_title);
-                TextView textViewAlbum = vView.findViewById(R.id.info_album);
-                TextView textViewArtist = vView.findViewById(R.id.info_artist);
-                TextView textViewTime = vView.findViewById(R.id.info_time);
+            ImageView imageView = vView.findViewById(R.id.info_albumArt);
+            TextView textViewTitle = vView.findViewById(R.id.info_title);
+            TextView textViewAlbum = vView.findViewById(R.id.info_album);
+            TextView textViewArtist = vView.findViewById(R.id.info_artist);
+            TextView textViewTime = vView.findViewById(R.id.info_time);
 
-                imageView.setImageResource(R.drawable.vr);
+            imageView.setImageResource(R.drawable.vr);
 
-                textViewTitle.setText(ConvertList.get(position).getTitle());
-                textViewAlbum.setText(ConvertList.get(position).getAlbum());
-                textViewArtist.setText(ConvertList.get(position).getArtist());
-                textViewTime.setText(ConvertList.get(position).getTime());
+            textViewTitle.setText(ConvertList.get(position).getTitle());
+            textViewAlbum.setText(ConvertList.get(position).getAlbum());
+            textViewArtist.setText(ConvertList.get(position).getArtist());
+            textViewTime.setText(ConvertList.get(position).getTime());
 
-                builder.setView(vView).setPositiveButton("Ok", null);
+            builder.setView(vView).setPositiveButton(getString(R.string.box_ok), null);
 
-                final AlertDialog alert = builder.create();
+            final AlertDialog alert = builder.create();
 
-                alert.setOnShowListener(new DialogInterface.OnShowListener() {
+            alert.setOnShowListener((DialogInterface dialog) -> (alert.getButton(AlertDialog.BUTTON_POSITIVE)).setOnClickListener((View v) -> alert.cancel()));
 
-                    @Override
-                    public void onShow(DialogInterface dialogInterface) {
-                        (alert.getButton(AlertDialog.BUTTON_POSITIVE)).setOnClickListener(
-                                new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View v) {
-                                        alert.cancel();
-                                    }
-                                }
-                        );
-                    }
-                });
+            alert.show();
 
-                alert.show();
 
-            }
         });
 
         return root;
