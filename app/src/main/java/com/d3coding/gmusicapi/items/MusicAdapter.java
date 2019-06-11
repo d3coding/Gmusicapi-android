@@ -66,11 +66,13 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
         else
             holder.download_status.setBackgroundColor(Color.rgb(255, 0, 0));
         // TODO: parseImage
+
         File imgFile = new File(Environment.getExternalStorageDirectory().getPath() + "/Gmusicapi/Thumb/" + Music.getUid() + ".png");
         if (imgFile.exists()) {
             Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
             holder.albumArt.setImageBitmap(myBitmap);
-        }
+        } else
+            holder.albumArt.setImageDrawable(null);
 
         //
         holder.time.setText(Music.getDuration());
@@ -81,6 +83,8 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
             PopupMenu popup = new PopupMenu(view.getContext(), holder.linearLayout);
             //inflating menu from xml resource
             popup.inflate(R.menu.menu_opt);
+            if (Music.getDownloadStatus())
+                popup.getMenu().findItem(R.id.men_remove).setVisible(true);
             //adding click listener
             popup.setOnMenuItemClickListener((MenuItem item) -> {
                 switch (item.getItemId()) {

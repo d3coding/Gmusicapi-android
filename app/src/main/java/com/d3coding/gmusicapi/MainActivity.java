@@ -84,8 +84,6 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        // MenuItem item = menu.findItem(R.id.addAction);
-        // getMenuInflater().inflate(R.menu.main, menu);
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main, menu);
 
@@ -103,8 +101,13 @@ public class MainActivity extends AppCompatActivity
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
+        } else if (id == R.id.action_clean_db) {
+            getApplicationContext().deleteDatabase(Gmusicdb.DATABASE_NAME);
+            recreate();
+            return true;
         } else if (id == R.id.action_logout) {
-            getApplicationContext().getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE).edit().remove(getString(R.string.token)).apply();
+            getApplicationContext().getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE).edit().remove(getString(R.string.token))
+                    .remove(getString(R.string.last_update)).apply();
             getApplicationContext().deleteDatabase(Gmusicdb.DATABASE_NAME);
             recreate();
             return true;
@@ -132,6 +135,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void refreshDB() {
+        getApplicationContext().deleteDatabase(Gmusicdb.DATABASE_NAME);
         SharedPreferences mPresets = getApplicationContext().getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE);
         new Gmusicnet(getApplicationContext()).execute(mPresets.getString(getString(R.string.token), ""));
     }

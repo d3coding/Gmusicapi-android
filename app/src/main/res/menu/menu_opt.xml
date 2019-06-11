@@ -4,6 +4,12 @@
     tools:showIn="navigation_view">
 
     <item
+        android:id="@+id/men_remove"
+        android:icon="@drawable/ic_menu_share"
+        android:title="@string/remove"
+        android:visible="false" />
+
+    <item
         android:id="@+id/men_download"
         android:icon="@drawable/ic_menu_share"
         android:title="@string/download" />
