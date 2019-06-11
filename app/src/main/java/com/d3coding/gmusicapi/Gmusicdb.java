@@ -13,6 +13,8 @@ import java.util.List;
 
 public class Gmusicdb extends SQLiteOpenHelper {
 
+    private static final String duration = "duration";
+
     private static final int DATABASE_VERSION = 1;
     static final String DATABASE_NAME = "MusicData.db";
     private static final String TABLE = "music";
@@ -28,12 +30,11 @@ public class Gmusicdb extends SQLiteOpenHelper {
     private static final String genre = "genre";
     private static final String albumArtUrl = "albumArtUrl";
     private static final String estimatedSize = "estimatedSize";
-    private static final String time = "time";
+    private static final String downloaded = "downloaded";
     private static final String albumId = "albumId";
     private static final String artistId = "artistId";
     private static final String comment = "comment";
     private static final String totalTrackCount = "totalTrackCount";
-
     private static final String SQL_CREATE_TABLE = "CREATE TABLE " + TABLE + " ( " +
             "id              INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
             "uid             TEXT    NOT NULL, " +
@@ -47,12 +48,41 @@ public class Gmusicdb extends SQLiteOpenHelper {
             "genre           TEXT, " +
             "albumArtUrl     TEXT, " +
             "estimatedSize   INTEGER, " +
-            "time            INTEGER, " +
+            "duration            INTEGER, " +
             "albumId         TEXT, " +
             "artistId        TEXT, " +
             "comment         TEXT, " +
-            "totalTrackCount INTEGER " +
+            "totalTrackCount INTEGER, " +
+            "downloaded      INTEGER " +
             ");";
+
+    long insertIfNotExists(Gmusicnet.Chunk chunk) {
+        long ret = 0L;
+        if (getCount(chunk.id) == 0) {
+            ContentValues values = new ContentValues();
+            SQLiteDatabase db = getWritableDatabase();
+            values.put(uid, chunk.id);
+            values.put(title, chunk.title);
+            values.put(artist, chunk.artist);
+            values.put(composer, chunk.composer);
+            values.put(album, chunk.album);
+            values.put(albumArtist, chunk.albumArtist);
+            values.put(year, chunk.year);
+            values.put(trackNumber, chunk.trackNumber);
+            values.put(genre, chunk.genre);
+            values.put(albumArtUrl, chunk.albumArtUrl);
+            values.put(estimatedSize, chunk.estimatedSize);
+            values.put(duration, chunk.duration);
+            values.put(albumId, chunk.albumId);
+            values.put(artistId, chunk.artistId);
+            values.put(comment, chunk.comment);
+            values.put(totalTrackCount, chunk.totalTrackCount);
+            values.put(downloaded, chunk.downloaded);
+            ret = db.insert(TABLE, null, values);
+            db.close();
+        }
+        return ret;
+    }
 
     private static final String SQL_DELETE_POSTS = "DROP TABLE IF EXISTS ";
 
@@ -92,135 +122,66 @@ public class Gmusicdb extends SQLiteOpenHelper {
         }
     }
 
-    long insertIfNotExists(Gmusicnet.Chunk chunk) {
-        long ret = 0L;
-        if (getCount(chunk.id) == 0) {
-            ContentValues values = new ContentValues();
-            SQLiteDatabase db = getWritableDatabase();
-            values.put(uid, chunk.id);
-            values.put(title, chunk.title);
-            values.put(artist, chunk.artist);
-            values.put(composer, chunk.composer);
-            values.put(album, chunk.album);
-            values.put(albumArtist, chunk.albumArtist);
-            values.put(year, chunk.year);
-            values.put(trackNumber, chunk.trackNumber);
-            values.put(genre, chunk.genre);
-            values.put(albumArtUrl, chunk.albumArtUrl);
-            values.put(estimatedSize, chunk.estimatedSize);
-            values.put(time, chunk.time);
-            values.put(albumId, chunk.albumId);
-            values.put(artistId, chunk.artistId);
-            values.put(comment, chunk.comment);
-            values.put(totalTrackCount, chunk.totalTrackCount);
-            ret = db.insert(TABLE, null, values);
+    public List<MusicItems> getMusicItems(Sort sort, boolean desc, boolean onlyOffline) {
+        List<MusicItems> ret = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String[] columns = {uid, albumArtUrl, title, artist, album, duration, downloaded};
+        String order = null;
+        String selection = null;
+        if (sort == Sort.title)
+            order = title;
+        else if (sort == Sort.artist)
+            order = artist;
+        else if (sort == Sort.album)
+            order = album;
+        else if (sort == Sort.genre)
+            order = genre;
+
+        if (desc)
+            order += " DESC";
+        else
+            order += " ASC";
+
+
+        if (onlyOffline)
+            selection = "downloaded = 1";
+
+
+        Cursor cursor = db.query(TABLE, columns, selection, null, null, null, order);
+
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+
+                ret.add(new MusicItems(cursor.getString(0), cursor.getString(1), cursor.getString(2),
+                        cursor.getString(3), cursor.getString(4), cursor.getString(5), cursor.getInt(6) != 0));
+            } while (cursor.moveToNext());
+        }
+
+        db.close();
+        try {
+            cursor.close();
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+
+        return ret;
+    }
+
+    public void updateDB(String uid) {
+        ContentValues cv = new ContentValues();
+        cv.put(downloaded, 1); //These Fields should be your String values of actual column names
+        SQLiteDatabase db = getWritableDatabase();
+        db.update(TABLE, cv, Gmusicdb.uid + " = \"" + uid + "\"", null);
+        try {
             db.close();
-        }
-        return ret;
-    }
-
-    public List<MusicItems> getMusicItemsTitle() {
-        List<MusicItems> ret = new ArrayList<>();
-        SQLiteDatabase db = this.getReadableDatabase();
-
-        String[] columns = {albumArtUrl, title,  artist, album,time};
-        String order = title + " ASC";
-
-        Cursor cursor = db.query(TABLE, columns, null, null, null, null, order);
-
-        if (cursor != null && cursor.moveToFirst()) {
-            do {
-                ret.add(new MusicItems(cursor.getString(0), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4) ));
-            } while (cursor.moveToNext());
-        }
-
-        db.close();
-        try {
-            cursor.close();
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
-
-        return ret;
     }
 
-
-    public List<MusicItems> getMusicItemsArtist() {
-        List<MusicItems> ret = new ArrayList<>();
-        SQLiteDatabase db = this.getReadableDatabase();
-
-        String[] columns = {albumArtUrl, title,  artist, album,time};
-        String order = artist + " ASC";
-
-        Cursor cursor = db.query(TABLE, columns, null, null, null, null, order);
-
-
-        if (cursor != null && cursor.moveToFirst()) {
-            do {
-                ret.add(new MusicItems(cursor.getString(0), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4) ));
-            } while (cursor.moveToNext());
-        }
-
-        db.close();
-        try {
-            cursor.close();
-        } catch (NullPointerException e) {
-            e.printStackTrace();
-        }
-
-        return ret;
-    }
-
-    public List<MusicItems> getMusicItemsAlbum() {
-        List<MusicItems> ret = new ArrayList<>();
-        SQLiteDatabase db = this.getReadableDatabase();
-
-        String[] columns = {albumArtUrl, title,  artist, album,time};
-        String order = album + " ASC";
-
-        Cursor cursor = db.query(TABLE, columns, null, null, null, null, order);
-
-
-        if (cursor != null && cursor.moveToFirst()) {
-            do {
-                ret.add(new MusicItems(cursor.getString(0), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4) ));
-            } while (cursor.moveToNext());
-        }
-
-        db.close();
-        try {
-            cursor.close();
-        } catch (NullPointerException e) {
-            e.printStackTrace();
-        }
-
-        return ret;
-    }
-
-    public List<MusicItems> getMusicItemsGenre() {
-        List<MusicItems> ret = new ArrayList<>();
-        SQLiteDatabase db = this.getReadableDatabase();
-
-        String[] columns = {albumArtUrl, title,  artist, album,time};
-        String order = genre + " ASC";
-
-        Cursor cursor = db.query(TABLE, columns, null, null, null, null, order);
-
-
-        if (cursor != null && cursor.moveToFirst()) {
-            do {
-                ret.add(new MusicItems(cursor.getString(0), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4) ));
-            } while (cursor.moveToNext());
-        }
-
-        db.close();
-        try {
-            cursor.close();
-        } catch (NullPointerException e) {
-            e.printStackTrace();
-        }
-
-        return ret;
+    public enum Sort {
+        title, artist, album, genre
     }
 
 }

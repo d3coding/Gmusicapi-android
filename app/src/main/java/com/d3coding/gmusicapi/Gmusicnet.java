@@ -54,7 +54,7 @@ public class Gmusicnet extends AsyncTask<String, Void, Void> {
             for (int x = 0; x < listTrack.size(); ++x) {
                 String id, title, artist, composer, album, albumArtist, genre, albumArtUrl, albumId, artistId, comment;
                 int year, trackNumber, totalTrackCount;
-                Long estimatedSize;
+                Long estimatedSize, duration;
                 // id
                 id = listTrack.get(x).getID();
                 // title
@@ -107,6 +107,8 @@ public class Gmusicnet extends AsyncTask<String, Void, Void> {
                     comment = optionalComment.get();
                 else
                     comment = "";
+                // duration
+                duration = listTrack.get(x).getDurationMillis();
                 // totalTrackCount
                 OptionalInt optionalTotalTrackCount = listTrack.get(x).getTotalTrackCount();
                 if (optionalTotalTrackCount.isPresent())
@@ -115,7 +117,7 @@ public class Gmusicnet extends AsyncTask<String, Void, Void> {
                     totalTrackCount = 0;
 
                 chunkList.add(new Chunk(id, title, artist, composer, album, albumArtist, year, trackNumber,
-                        genre, albumArtUrl, estimatedSize, 100L, albumId, artistId, comment, totalTrackCount));
+                        genre, albumArtUrl, estimatedSize, duration, albumId, artistId, comment, totalTrackCount, 0));
             }
 
             System.out.println("#005");
@@ -145,12 +147,12 @@ public class Gmusicnet extends AsyncTask<String, Void, Void> {
         String id, title, artist, composer, album, albumArtist;
         int year, trackNumber;
         String genre, albumArtUrl;
-        Long estimatedSize, time;
+        Long estimatedSize, duration;
         String albumId, artistId, comment;
-        int totalTrackCount;
+        int totalTrackCount, downloaded;
 
         Chunk(String id, String title, String artist, String composer, String album, String albumArtist, int year, int trackNumber,
-              String genre, String albumArtUrl, Long estimatedSize, Long time, String albumId, String artistId, String comment, int totalTrackCount) {
+              String genre, String albumArtUrl, Long estimatedSize, Long duration, String albumId, String artistId, String comment, int totalTrackCount, int downloaded) {
 
             this.id = id;
             this.title = title;
@@ -163,11 +165,12 @@ public class Gmusicnet extends AsyncTask<String, Void, Void> {
             this.genre = genre;
             this.albumArtUrl = albumArtUrl;
             this.estimatedSize = estimatedSize;
-            this.time = time;
+            this.duration = duration;
             this.albumId = albumId;
             this.artistId = artistId;
             this.comment = comment;
             this.totalTrackCount = totalTrackCount;
+            this.downloaded = downloaded;
 
         }
     }

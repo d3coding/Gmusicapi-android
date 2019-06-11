@@ -1,7 +1,10 @@
 package com.d3coding.gmusicapi.ui.main;
 
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
@@ -21,6 +24,7 @@ import com.d3coding.gmusicapi.R;
 import com.d3coding.gmusicapi.items.MusicAdapter;
 import com.d3coding.gmusicapi.items.MusicItems;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,13 +76,13 @@ public class PlaceholderFragment extends Fragment {
             if (db == null) {
                 db = new Gmusicdb(getContext());
                 if (index == 1)
-                    ConvertList.addAll(db.getMusicItemsTitle());
+                    ConvertList.addAll(db.getMusicItems(Gmusicdb.Sort.title, false, false));
                 else if (index == 2)
-                    ConvertList.addAll(db.getMusicItemsArtist());
+                    ConvertList.addAll(db.getMusicItems(Gmusicdb.Sort.artist, false, false));
                 else if (index == 3)
-                    ConvertList.addAll(db.getMusicItemsAlbum());
+                    ConvertList.addAll(db.getMusicItems(Gmusicdb.Sort.album, false, false));
                 else if (index == 4)
-                    ConvertList.addAll(db.getMusicItemsGenre());
+                    ConvertList.addAll(db.getMusicItems(Gmusicdb.Sort.genre, false, false));
 
             }
 
@@ -98,12 +102,16 @@ public class PlaceholderFragment extends Fragment {
             TextView textViewArtist = vView.findViewById(R.id.info_artist);
             TextView textViewTime = vView.findViewById(R.id.info_time);
 
-            imageView.setImageResource(R.drawable.vr);
+            File imgFile = new File(Environment.getExternalStorageDirectory().getPath() + "/Gmusicapi/Thumb/" + ConvertList.get(position).getUid() + ".png");
+            if (imgFile.exists()) {
+                Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+                imageView.setImageBitmap(myBitmap);
+            }
 
             textViewTitle.setText(ConvertList.get(position).getTitle());
             textViewAlbum.setText(ConvertList.get(position).getAlbum());
             textViewArtist.setText(ConvertList.get(position).getArtist());
-            textViewTime.setText(ConvertList.get(position).getTime());
+            textViewTime.setText(ConvertList.get(position).getDuration());
 
             builder.setView(vView).setPositiveButton(getString(R.string.box_ok), null);
 
