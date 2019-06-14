@@ -1,13 +1,9 @@
 package com.d3coding.gmusicapi.items;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.os.Environment;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,24 +12,13 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.d3coding.gmusicapi.Gmusicdb;
+import com.d3coding.gmusicapi.GmusicFile;
 import com.d3coding.gmusicapi.R;
-import com.github.felixgail.gplaymusic.api.GPlayMusic;
-import com.github.felixgail.gplaymusic.api.TrackApi;
-import com.github.felixgail.gplaymusic.model.enums.StreamQuality;
-import com.github.felixgail.gplaymusic.util.TokenProvider;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.file.Paths;
 import java.util.List;
-
-import svarzee.gps.gpsoauth.AuthToken;
 
 public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder> {
 
@@ -67,7 +52,7 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
             holder.download_status.setBackgroundColor(Color.rgb(255, 0, 0));
         // TODO: parseImage
 
-        File imgFile = new File(Environment.getExternalStorageDirectory().getPath() + "/Gmusicapi/Thumb/" + Music.getUid() + ".png");
+        File imgFile = new File(holder.albumArt.getContext().getApplicationInfo().dataDir + "/t_cache/" + convertList.get(position).getUid() + ".png");
         if (imgFile.exists()) {
             Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
             holder.albumArt.setImageBitmap(myBitmap);
@@ -89,55 +74,18 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
             popup.setOnMenuItemClickListener((MenuItem item) -> {
                 switch (item.getItemId()) {
                     case R.id.men_download: {
-                        new Thread(() -> {
 
-                            String MUSIC_PATH = Environment.getExternalStorageDirectory().toString() + "/Gmusicapi/Music/";
-                            String THUMB_PATH = Environment.getExternalStorageDirectory().toString() + "/Gmusicapi/Thumb/";
+                        GmusicFile gmusicFile = new GmusicFile(view.getContext());
+                        gmusicFile.addToQueue(Music.getAlbumArtUrl(), this, Music, position);
 
-                            try {
+                        Toast.makeText(view.getContext(), R.string.download, Toast.LENGTH_LONG).show();
 
-                                System.out.println("downloading");
-                                SharedPreferences mPresets = view.getContext().getSharedPreferences(view.getContext().getString(R.string.preferences_user), Context.MODE_PRIVATE);
-                                AuthToken authToken = TokenProvider.provideToken(mPresets.getString(view.getContext().getString(R.string.token), ""));
-                                GPlayMusic api = new GPlayMusic.Builder().setAuthToken(authToken).build();
-                                TrackApi trackApi = api.getTrackApi();
-                                trackApi.getTrack(Music.getUid()).download(StreamQuality.HIGH, Paths.get(MUSIC_PATH + Music.getUid() + ".mp3"));
-
-                                URL url = new URL(Music.getAlbumArtUrl());
-                                HttpURLConnection c = (HttpURLConnection) url.openConnection();
-                                c.setRequestMethod("GET");
-                                c.setDoOutput(true);
-                                c.connect();
-
-                                Log.v("LOG_TAG", "PATH: " + THUMB_PATH);
-
-                                File file = new File(THUMB_PATH);
-                                file.mkdirs();
-                                File outputFile = new File(file, Music.getUid() + ".png");
-                                FileOutputStream fos = new FileOutputStream(outputFile);
-                                InputStream is = c.getInputStream();
-
-                                byte[] buffer = new byte[4096];
-                                int len1;
-
-                                while ((len1 = is.read(buffer)) != -1)
-                                    fos.write(buffer, 0, len1);
+                        return true;
+                    }
+                    case R.id.men_remove: {
 
 
-                                fos.close();
-                                is.close();
-
-                                System.out.println(" A new file is downloaded successfully");
-
-                                (new Gmusicdb(view.getContext())).updateDB(Music.getUid());
-
-                                System.out.println(" Updating database ");
-
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }).start();
-
+                        notifyItemChanged(position);
                         return true;
                     }
                     default:

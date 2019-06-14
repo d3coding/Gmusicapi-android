@@ -123,8 +123,7 @@ public class Gmusicnet extends AsyncTask<String, Void, Void> {
             System.out.println("#005");
 
             Gmusicdb gmusicdb = new Gmusicdb(context);
-            for (int x = 0; x < chunkList.size(); ++x)
-                gmusicdb.insertIfNotExists(chunkList.get(x));
+            gmusicdb.insertIfNotExists(chunkList);
 
             System.out.println("#006");
         } catch (IOException e) {
@@ -135,6 +134,7 @@ public class Gmusicnet extends AsyncTask<String, Void, Void> {
             e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
+            System.out.println();
         }
         context.getSharedPreferences(context.getString(R.string.preferences_user), Context.MODE_PRIVATE).edit()
                 .putLong(context.getString(R.string.last_update), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())).apply();

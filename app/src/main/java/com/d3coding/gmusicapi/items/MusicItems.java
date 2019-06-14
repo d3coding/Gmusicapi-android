@@ -41,5 +41,4 @@ public class MusicItems {
     public boolean getDownloadStatus() {
         return downloadStatus;
     }
-
 }

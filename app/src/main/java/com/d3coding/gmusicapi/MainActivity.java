@@ -147,9 +147,9 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.nav_all) {
             Toast.makeText(getApplicationContext(), "NULL", Toast.LENGTH_SHORT).show();
-        } else if (id == R.id.nav_offline) {
-            Toast.makeText(getApplicationContext(), "NULL", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_download) {
+            Toast.makeText(getApplicationContext(), "NULL", Toast.LENGTH_SHORT).show();
+        } else if (id == R.id.nav_offline) {
             Toast.makeText(getApplicationContext(), "NULL", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_advanced) {
             Toast.makeText(getApplicationContext(), "NULL", Toast.LENGTH_SHORT).show();

@@ -56,32 +56,30 @@ public class Gmusicdb extends SQLiteOpenHelper {
             "downloaded      INTEGER " +
             ");";
 
-    long insertIfNotExists(Gmusicnet.Chunk chunk) {
-        long ret = 0L;
-        if (getCount(chunk.id) == 0) {
+    void insertIfNotExists(List<Gmusicnet.Chunk> chunk) {
+        SQLiteDatabase db = getWritableDatabase();
+        for (int x = 0; x < chunk.size(); ++x) {
             ContentValues values = new ContentValues();
-            SQLiteDatabase db = getWritableDatabase();
-            values.put(uid, chunk.id);
-            values.put(title, chunk.title);
-            values.put(artist, chunk.artist);
-            values.put(composer, chunk.composer);
-            values.put(album, chunk.album);
-            values.put(albumArtist, chunk.albumArtist);
-            values.put(year, chunk.year);
-            values.put(trackNumber, chunk.trackNumber);
-            values.put(genre, chunk.genre);
-            values.put(albumArtUrl, chunk.albumArtUrl);
-            values.put(estimatedSize, chunk.estimatedSize);
-            values.put(duration, chunk.duration);
-            values.put(albumId, chunk.albumId);
-            values.put(artistId, chunk.artistId);
-            values.put(comment, chunk.comment);
-            values.put(totalTrackCount, chunk.totalTrackCount);
-            values.put(downloaded, chunk.downloaded);
-            ret = db.insert(TABLE, null, values);
-            db.close();
+            values.put(uid, chunk.get(x).id);
+            values.put(title, chunk.get(x).title);
+            values.put(artist, chunk.get(x).artist);
+            values.put(composer, chunk.get(x).composer);
+            values.put(album, chunk.get(x).album);
+            values.put(albumArtist, chunk.get(x).albumArtist);
+            values.put(year, chunk.get(x).year);
+            values.put(trackNumber, chunk.get(x).trackNumber);
+            values.put(genre, chunk.get(x).genre);
+            values.put(albumArtUrl, chunk.get(x).albumArtUrl);
+            values.put(estimatedSize, chunk.get(x).estimatedSize);
+            values.put(duration, chunk.get(x).duration);
+            values.put(albumId, chunk.get(x).albumId);
+            values.put(artistId, chunk.get(x).artistId);
+            values.put(comment, chunk.get(x).comment);
+            values.put(totalTrackCount, chunk.get(x).totalTrackCount);
+            values.put(downloaded, chunk.get(x).downloaded);
+            db.insert(TABLE, null, values);
         }
-        return ret;
+        db.close();
     }
 
     private static final String SQL_DELETE_POSTS = "DROP TABLE IF EXISTS ";

@@ -4,7 +4,6 @@ import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
@@ -102,7 +101,7 @@ public class PlaceholderFragment extends Fragment {
             TextView textViewArtist = vView.findViewById(R.id.info_artist);
             TextView textViewTime = vView.findViewById(R.id.info_time);
 
-            File imgFile = new File(Environment.getExternalStorageDirectory().getPath() + "/Gmusicapi/Thumb/" + ConvertList.get(position).getUid() + ".png");
+            File imgFile = new File(getContext().getApplicationInfo().dataDir + "/t_cache/" + ConvertList.get(position).getUid() + ".png");
             if (imgFile.exists()) {
                 Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
                 imageView.setImageBitmap(myBitmap);
