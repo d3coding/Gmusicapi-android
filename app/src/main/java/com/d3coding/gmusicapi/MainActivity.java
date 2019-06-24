@@ -21,14 +21,14 @@ import android.widget.Toast;
 
 import com.d3coding.gmusicapi.ui.main.SectionsPagerAdapter;
 
-public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
-    private static final int LOG_IN_ACTIVITY = 50;
-
-    private static final int RESULT_ERROR = -4;
+    static final int LOGIN_ACTIVITY = 11;
 
     private boolean mState = false;
+
+    private DrawerLayout drawer;
+    private NavigationView navigationView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,12 +36,13 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.ac_blank);
 
         ActivityCompat.requestPermissions(MainActivity.this,
-                new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                1);
+                new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
 
         SharedPreferences mPresets = getApplicationContext().getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE);
 
         if (mPresets.contains(getString(R.string.token))) {
+
+            // TODO: validate token
 
             setContentView(R.layout.ac_all);
 
@@ -54,8 +55,8 @@ public class MainActivity extends AppCompatActivity
             Toolbar toolbar = findViewById(R.id.toolbar);
             setSupportActionBar(toolbar);
 
-            DrawerLayout drawer = findViewById(R.id.drawer_layout);
-            NavigationView navigationView = findViewById(R.id.nav_view);
+            drawer = findViewById(R.id.drawer_layout);
+            navigationView = findViewById(R.id.nav_view);
             ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                     this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
             drawer.addDrawerListener(toggle);
@@ -66,14 +67,13 @@ public class MainActivity extends AppCompatActivity
                 refreshDB();
 
         } else {
-            startActivityForResult(new Intent(this, Login.class), LOG_IN_ACTIVITY);
+            startActivityForResult(new Intent(this, Login.class), LOGIN_ACTIVITY);
         }
 
     }
 
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
@@ -86,8 +86,8 @@ public class MainActivity extends AppCompatActivity
         // Inflate the menu; this adds items to the action bar if it is present.
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main, menu);
+        menu.findItem(R.id.act_icon_refresh_log).setVisible(mState);
 
-        menu.findItem(R.id.refresh).setVisible(mState);
         return true;
     }
 
@@ -98,13 +98,20 @@ public class MainActivity extends AppCompatActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.act_icon_refresh_log) {
+            return true;
+        } else if (id == R.id.act_icon_search) {
             return true;
         } else if (id == R.id.action_clean_db) {
             getApplicationContext().deleteDatabase(Gmusicdb.DATABASE_NAME);
             recreate();
             return true;
+        } else if (id == R.id.action_refresh_db) {
+            // TODO: UpdateAlertDialog
+            refreshDB();
+            return true;
+        } else if (id == R.id.action_recreate) {
+            recreate();
         } else if (id == R.id.action_logout) {
             getApplicationContext().getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE).edit().remove(getString(R.string.token))
                     .remove(getString(R.string.last_update)).apply();
@@ -112,7 +119,6 @@ public class MainActivity extends AppCompatActivity
             recreate();
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -120,7 +126,7 @@ public class MainActivity extends AppCompatActivity
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
-            case (LOG_IN_ACTIVITY): {
+            case (LOGIN_ACTIVITY): {
                 if (resultCode == RESULT_OK) {
                     (getApplicationContext().getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE).edit())
                             .putString(getString(R.string.token), data.getStringExtra(getString(R.string.token)))
@@ -137,7 +143,7 @@ public class MainActivity extends AppCompatActivity
     private void refreshDB() {
         getApplicationContext().deleteDatabase(Gmusicdb.DATABASE_NAME);
         SharedPreferences mPresets = getApplicationContext().getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE);
-        new Gmusicnet(getApplicationContext()).execute(mPresets.getString(getString(R.string.token), ""));
+        new Gmusicnet(MainActivity.this).execute(mPresets.getString(getString(R.string.token), ""));
     }
 
     @Override
@@ -148,29 +154,32 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.nav_all) {
             Toast.makeText(getApplicationContext(), "NULL", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_download) {
+            // TODO: DownloadActivity
             Toast.makeText(getApplicationContext(), "NULL", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_offline) {
+            // TODO: OfflineActivity
             Toast.makeText(getApplicationContext(), "NULL", Toast.LENGTH_SHORT).show();
-        } else if (id == R.id.nav_advanced) {
+        } else if (id == R.id.nav_playlist) {
+            // TODO: PlaylistActivity
             Toast.makeText(getApplicationContext(), "NULL", Toast.LENGTH_SHORT).show();
-        } else if (id == R.id.nav_config) {
+        } else if (id == R.id.nav_settings) {
+            // TODO: SettingsActivity
             Toast.makeText(getApplicationContext(), "NULL", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_log) {
+            // TODO: LogActivity
             Toast.makeText(getApplicationContext(), "NULL", Toast.LENGTH_SHORT).show();
             mState = true;
             supportInvalidateOptionsMenu();
-        } else if (id == R.id.nav_refresh) {
-            refreshDB();
-        } else if (id == R.id.nav_recreate) {
-            recreate();
         } else if (id == R.id.nav_info) {
+            // TODO: InfoActivity
             Toast.makeText(getApplicationContext(), "NULL", Toast.LENGTH_SHORT).show();
             mState = false;
             supportInvalidateOptionsMenu();
         }
 
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
+
 }

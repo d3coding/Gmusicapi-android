@@ -2,7 +2,6 @@ package com.d3coding.gmusicapi.ui.main;
 
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
@@ -16,14 +15,15 @@ import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.d3coding.gmusicapi.GmusicFile;
 import com.d3coding.gmusicapi.Gmusicdb;
 import com.d3coding.gmusicapi.R;
 import com.d3coding.gmusicapi.items.MusicAdapter;
 import com.d3coding.gmusicapi.items.MusicItems;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +36,7 @@ public class PlaceholderFragment extends Fragment {
     int index = 1;
 
     Gmusicdb db;
+    GmusicFile gmusicFile;
     private RecyclerView recyclerView;
     private List<MusicItems> ConvertList = new ArrayList<>();
     private MusicAdapter mAdapter;
@@ -51,6 +52,7 @@ public class PlaceholderFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        gmusicFile = new GmusicFile(getContext());
         if (getArguments() != null)
             index = getArguments().getInt(INDEX);
 
@@ -89,10 +91,9 @@ public class PlaceholderFragment extends Fragment {
 
         }
 
-        mAdapter.setOnItemClickListener((View view, int position) -> {
+        mAdapter.setOnItemClickListener((view, position) -> {
 
             AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-
             ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.music_info, null);
 
             ImageView imageView = vView.findViewById(R.id.info_albumArt);
@@ -101,11 +102,10 @@ public class PlaceholderFragment extends Fragment {
             TextView textViewArtist = vView.findViewById(R.id.info_artist);
             TextView textViewTime = vView.findViewById(R.id.info_time);
 
-            File imgFile = new File(getContext().getApplicationInfo().dataDir + "/t_cache/" + ConvertList.get(position).getUid() + ".png");
-            if (imgFile.exists()) {
-                Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-                imageView.setImageBitmap(myBitmap);
-            }
+            Bitmap bitmap = gmusicFile.getBitmapThumbImage(ConvertList.get(position).getUid());
+            if (bitmap == null)
+                bitmap = gmusicFile.getDefaultThumb();
+            imageView.setImageBitmap(bitmap);
 
             textViewTitle.setText(ConvertList.get(position).getTitle());
             textViewAlbum.setText(ConvertList.get(position).getAlbum());
@@ -113,16 +113,52 @@ public class PlaceholderFragment extends Fragment {
             textViewTime.setText(ConvertList.get(position).getDuration());
 
             builder.setView(vView).setPositiveButton(getString(R.string.box_ok), null);
-
             final AlertDialog alert = builder.create();
-
             alert.setOnShowListener((DialogInterface dialog) -> (alert.getButton(AlertDialog.BUTTON_POSITIVE)).setOnClickListener((View v) -> alert.cancel()));
-
             alert.show();
 
+        });
+
+
+        mAdapter.setOnItemLongClickListener((view, position) -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+            ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.music_opt, null);
+
+            ImageView imageView = vView.findViewById(R.id.opt_album_art);
+            TextView textViewTitle = vView.findViewById(R.id.opt_title);
+            TextView textViewArtist = vView.findViewById(R.id.opt_artist);
+
+            LinearLayout linearLayoutComplete = vView.findViewById(R.id.status_complete);
+            LinearLayout linearLayoutDownloading = vView.findViewById(R.id.status_downloading);
+
+            Bitmap bitmap = gmusicFile.getBitmapThumbImage(ConvertList.get(position).getUid());
+            if (bitmap == null)
+                bitmap = gmusicFile.getDefaultThumb();
+            imageView.setImageBitmap(bitmap);
+
+            textViewTitle.setText(ConvertList.get(position).getTitle());
+            textViewArtist.setText(ConvertList.get(position).getArtist());
+
+            if (ConvertList.get(position).getDownloadStatus()) {
+                linearLayoutComplete.setVisibility(View.VISIBLE);
+                linearLayoutDownloading.setVisibility(View.GONE);
+            } else {
+                linearLayoutComplete.setVisibility(View.GONE);
+                linearLayoutDownloading.setVisibility(View.VISIBLE);
+
+                gmusicFile.addToQueue(ConvertList.get(position).getUid(), linearLayoutComplete, linearLayoutDownloading);
+
+            }
+
+            builder.setView(vView).setPositiveButton(getString(R.string.box_ok), null);
+            final AlertDialog alert = builder.create();
+            alert.setOnShowListener((DialogInterface dialog) -> (alert.getButton(AlertDialog.BUTTON_POSITIVE)).setOnClickListener((View v) -> alert.cancel()));
+            alert.show();
 
         });
 
         return root;
     }
+
+
 }

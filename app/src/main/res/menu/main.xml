@@ -3,27 +3,41 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/refresh"
-        android:icon="@drawable/abs"
-        android:orderInCategory="100"
-        android:title="@string/nav_s_other"
+        android:id="@+id/act_icon_refresh_log"
+        android:icon="@drawable/ic_launcher_foreground"
+        android:orderInCategory="11"
+        android:title="@string/act_icon_refresh_log"
         app:showAsAction="ifRoom"
         android:visible="false" />
+
     <item
-        android:id="@+id/action_settings"
-        android:orderInCategory="100"
-        android:title="@string/action_settings"
-        app:showAsAction="never" />
+        android:id="@+id/act_icon_search"
+        android:icon="@drawable/ic_launcher_foreground"
+        android:orderInCategory="12"
+        android:title="@string/act_icon_search"
+        app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_clean_db"
-        android:orderInCategory="100"
+        android:orderInCategory="21"
         android:title="@string/action_clean_db"
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/action_refresh_db"
+        android:orderInCategory="22"
+        android:title="@string/action_refresh_db"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_recreate"
+        android:orderInCategory="23"
+        android:title="@string/action_recreate"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_logout"
-        android:orderInCategory="100"
+        android:orderInCategory="24"
         android:title="@string/action_logout"
         app:showAsAction="never" />
 

@@ -56,32 +56,6 @@ public class Gmusicdb extends SQLiteOpenHelper {
             "downloaded      INTEGER " +
             ");";
 
-    void insertIfNotExists(List<Gmusicnet.Chunk> chunk) {
-        SQLiteDatabase db = getWritableDatabase();
-        for (int x = 0; x < chunk.size(); ++x) {
-            ContentValues values = new ContentValues();
-            values.put(uid, chunk.get(x).id);
-            values.put(title, chunk.get(x).title);
-            values.put(artist, chunk.get(x).artist);
-            values.put(composer, chunk.get(x).composer);
-            values.put(album, chunk.get(x).album);
-            values.put(albumArtist, chunk.get(x).albumArtist);
-            values.put(year, chunk.get(x).year);
-            values.put(trackNumber, chunk.get(x).trackNumber);
-            values.put(genre, chunk.get(x).genre);
-            values.put(albumArtUrl, chunk.get(x).albumArtUrl);
-            values.put(estimatedSize, chunk.get(x).estimatedSize);
-            values.put(duration, chunk.get(x).duration);
-            values.put(albumId, chunk.get(x).albumId);
-            values.put(artistId, chunk.get(x).artistId);
-            values.put(comment, chunk.get(x).comment);
-            values.put(totalTrackCount, chunk.get(x).totalTrackCount);
-            values.put(downloaded, chunk.get(x).downloaded);
-            db.insert(TABLE, null, values);
-        }
-        db.close();
-    }
-
     private static final String SQL_DELETE_POSTS = "DROP TABLE IF EXISTS ";
 
     public Gmusicdb(Context context) {
@@ -118,6 +92,70 @@ public class Gmusicdb extends SQLiteOpenHelper {
             if (db != null)
                 db.close();
         }
+    }
+
+    void insertIfNotExists(List<Gmusicnet.Chunk> chunk) {
+        SQLiteDatabase db = getWritableDatabase();
+        for (int x = 0; x < chunk.size(); ++x) {
+            ContentValues values = new ContentValues();
+            values.put(uid, chunk.get(x).id);
+            values.put(title, chunk.get(x).title);
+            values.put(artist, chunk.get(x).artist);
+            values.put(composer, chunk.get(x).composer);
+            values.put(album, chunk.get(x).album);
+            values.put(albumArtist, chunk.get(x).albumArtist);
+            values.put(year, chunk.get(x).year);
+            values.put(trackNumber, chunk.get(x).trackNumber);
+            values.put(genre, chunk.get(x).genre);
+            values.put(albumArtUrl, chunk.get(x).albumArtUrl);
+            values.put(estimatedSize, chunk.get(x).estimatedSize);
+            values.put(duration, chunk.get(x).duration);
+            values.put(albumId, chunk.get(x).albumId);
+            values.put(artistId, chunk.get(x).artistId);
+            values.put(comment, chunk.get(x).comment);
+            values.put(totalTrackCount, chunk.get(x).totalTrackCount);
+            values.put(downloaded, chunk.get(x).downloaded);
+            db.insert(TABLE, null, values);
+        }
+        db.close();
+    }
+
+    public Gmusicnet.Chunk selectByUID(String uid) {
+        Gmusicnet.Chunk chunk = null;
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        String selection = Gmusicdb.uid + " = \"" + uid + "\"";
+
+        Cursor cursor = db.query(TABLE, null, selection, null, null, null, null);
+
+        if (cursor != null && cursor.moveToFirst())
+            chunk = new Gmusicnet.Chunk(cursor.getString(1),
+                    cursor.getString(2),
+                    cursor.getString(3),
+                    cursor.getString(4),
+                    cursor.getString(5),
+                    cursor.getString(6),
+                    cursor.getInt(7),
+                    cursor.getInt(8),
+                    cursor.getString(9),
+                    cursor.getString(10),
+                    cursor.getLong(11),
+                    cursor.getLong(12),
+                    cursor.getString(13),
+                    cursor.getString(14),
+                    cursor.getString(15),
+                    cursor.getInt(16),
+                    cursor.getInt(17));
+
+        try {
+            db.close();
+            cursor.close();
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+
+
+        return chunk;
     }
 
     public List<MusicItems> getMusicItems(Sort sort, boolean desc, boolean onlyOffline) {
@@ -166,11 +204,33 @@ public class Gmusicdb extends SQLiteOpenHelper {
         return ret;
     }
 
-    public void updateDB(String uid) {
+    public String getThumbURL(String uuid) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String[] columns = {albumArtUrl};
+        String selection = uid + " = \"" + uuid + "\"";
+
+        Cursor cursor = db.query(TABLE, columns, selection, null, null, null, null);
+
+        String ret = "";
+        if (cursor != null && cursor.moveToFirst())
+            ret = cursor.getString(0);
+
+        db.close();
+        try {
+            cursor.close();
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+
+        return ret;
+    }
+
+    public void updateDB(String uuid, int value) {
         ContentValues cv = new ContentValues();
-        cv.put(downloaded, 1); //These Fields should be your String values of actual column names
+        cv.put(downloaded, value);
         SQLiteDatabase db = getWritableDatabase();
-        db.update(TABLE, cv, Gmusicdb.uid + " = \"" + uid + "\"", null);
+        db.update(TABLE, cv, uid + " = \"" + uuid + "\"", null);
         try {
             db.close();
         } catch (NullPointerException e) {

@@ -1,7 +1,9 @@
 package com.d3coding.gmusicapi;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.AsyncTask;
+import android.widget.Toast;
 
 import com.github.felixgail.gplaymusic.api.GPlayMusic;
 import com.github.felixgail.gplaymusic.api.TrackApi;
@@ -17,7 +19,6 @@ import java.util.OptionalInt;
 import java.util.concurrent.TimeUnit;
 
 import svarzee.gps.gpsoauth.AuthToken;
-import svarzee.gps.gpsoauth.Gpsoauth;
 
 public class Gmusicnet extends AsyncTask<String, Void, Void> {
 
@@ -31,125 +32,121 @@ public class Gmusicnet extends AsyncTask<String, Void, Void> {
     @Override
     protected Void doInBackground(String... strings) {
         try {
-
-            System.out.println("#010");
+            synchronized (this) {
+                ((Activity) context).runOnUiThread(() -> {
+                    Toast.makeText(context, "Updating database...", Toast.LENGTH_SHORT).show();
+                });
+            }
             AuthToken authToken;
 
             if (strings.length > 0)
                 authToken = TokenProvider.provideToken(strings[0]);
             else
-                throw new Exception("Argumnent");
+                throw new Exception("Invalid token");
 
-            System.out.println("#001");
             GPlayMusic api = new GPlayMusic.Builder().setAuthToken(authToken).build();
-            System.out.println("#002");
             TrackApi trackApi = api.getTrackApi();
-            System.out.println("#003");
             List<Track> listTrack = trackApi.getLibraryTracks();
-            System.out.println("#004");
-            System.out.println("# Size: " + listTrack.size());
+
+            System.out.println("Database size: " + listTrack.size());
+
 
             chunkList = new ArrayList<>();
 
             for (int x = 0; x < listTrack.size(); ++x) {
-                String id, title, artist, composer, album, albumArtist, genre, albumArtUrl, albumId, artistId, comment;
-                int year, trackNumber, totalTrackCount;
-                Long estimatedSize, duration;
-                // id
-                id = listTrack.get(x).getID();
-                // title
-                title = listTrack.get(x).getTitle();
-                // artist
-                artist = listTrack.get(x).getArtist();
-                // composer
-                composer = listTrack.get(x).getComposer();
-                // album
-                album = listTrack.get(x).getAlbum();
-                // albumArtist
-                albumArtist = listTrack.get(x).getAlbumArtist();
+                Chunk chunk = new Chunk();
+                chunk.id = listTrack.get(x).getID();
+                chunk.title = listTrack.get(x).getTitle();
+                chunk.artist = listTrack.get(x).getArtist();
+                chunk.composer = listTrack.get(x).getComposer();
+                chunk.album = listTrack.get(x).getAlbum();
+                chunk.albumArtist = listTrack.get(x).getAlbumArtist();
+
                 // year
                 OptionalInt optionalInt = listTrack.get(x).getYear();
                 if (optionalInt.isPresent())
-                    year = optionalInt.getAsInt();
+                    chunk.year = optionalInt.getAsInt();
                 else
-                    year = 0;
-                // trackNumber
-                trackNumber = listTrack.get(x).getTrackNumber();
+                    chunk.year = 0;
+
+                chunk.trackNumber = listTrack.get(x).getTrackNumber();
+
                 // genre
                 Optional<String> optionalGenre = listTrack.get(x).getGenre();
                 if (optionalGenre.isPresent())
-                    genre = optionalGenre.get();
+                    chunk.genre = optionalGenre.get();
                 else
-                    genre = "";
+                    chunk.genre = "";
+
                 // albumArtUrl
                 Optional<List<ArtRef>> optionalArtRefs = listTrack.get(x).getAlbumArtRef();
                 if (optionalArtRefs.isPresent())
-                    albumArtUrl = optionalArtRefs.get().get(0).getUrl();
+                    chunk.albumArtUrl = optionalArtRefs.get().get(0).getUrl();
                 else
-                    albumArtUrl = "";
-                // estimatedSize
-                estimatedSize = listTrack.get(x).getEstimatedSize();
-                // albumId
-                albumId = listTrack.get(x).getAlbumId();
+                    chunk.albumArtUrl = "";
+
+                chunk.estimatedSize = listTrack.get(x).getEstimatedSize();
+                chunk.albumId = listTrack.get(x).getAlbumId();
                 // artistId
                 Optional<List<String>> optionalArtistId = listTrack.get(x).getArtistId();
                 if (optionalArtistId.isPresent()) {
                     StringBuilder stringBuilder = new StringBuilder(optionalArtistId.get().get(0));
                     for (int y = 1; y < optionalArtistId.get().size(); ++y)
                         stringBuilder.append(optionalArtistId.get().get(y));
-                    artistId = stringBuilder.toString();
-
+                    chunk.artistId = stringBuilder.toString();
                 } else
-                    artistId = "";
+                    chunk.artistId = "";
+
                 // comment
                 Optional<String> optionalComment = listTrack.get(x).getComment();
                 if (optionalComment.isPresent())
-                    comment = optionalComment.get();
+                    chunk.comment = optionalComment.get();
                 else
-                    comment = "";
-                // duration
-                duration = listTrack.get(x).getDurationMillis();
+                    chunk.comment = "";
+
+                chunk.duration = listTrack.get(x).getDurationMillis();
+
                 // totalTrackCount
                 OptionalInt optionalTotalTrackCount = listTrack.get(x).getTotalTrackCount();
                 if (optionalTotalTrackCount.isPresent())
-                    totalTrackCount = optionalTotalTrackCount.getAsInt();
+                    chunk.totalTrackCount = optionalTotalTrackCount.getAsInt();
                 else
-                    totalTrackCount = 0;
+                    chunk.totalTrackCount = 0;
 
-                chunkList.add(new Chunk(id, title, artist, composer, album, albumArtist, year, trackNumber,
-                        genre, albumArtUrl, estimatedSize, duration, albumId, artistId, comment, totalTrackCount, 0));
+                chunkList.add(chunk);
             }
 
-            System.out.println("#005");
+            new Gmusicdb(context).insertIfNotExists(chunkList);
 
-            Gmusicdb gmusicdb = new Gmusicdb(context);
-            gmusicdb.insertIfNotExists(chunkList);
+            synchronized (this) {
+                ((Activity) context).runOnUiThread(() -> {
+                    Toast.makeText(context, "Database info download complete...", Toast.LENGTH_LONG).show();
+                });
+            }
 
-            System.out.println("#006");
         } catch (IOException e) {
-            System.out.println("#100");
-            e.printStackTrace();
-        } catch (Gpsoauth.TokenRequestFailed e) {
-            System.out.println("#666");
             e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println();
         }
+
         context.getSharedPreferences(context.getString(R.string.preferences_user), Context.MODE_PRIVATE).edit()
                 .putLong(context.getString(R.string.last_update), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())).apply();
 
         return null;
     }
 
-    class Chunk {
+    public static class Chunk {
 
-        String id, title, artist, composer, album, albumArtist;
-        int year, trackNumber;
-        String genre, albumArtUrl;
-        Long estimatedSize, duration;
-        String albumId, artistId, comment;
-        int totalTrackCount, downloaded;
+        public String id, title, artist, composer, album, albumArtist;
+        public int year, trackNumber;
+        public String genre, albumArtUrl;
+        public Long estimatedSize, duration;
+        public String albumId, artistId, comment;
+        public int totalTrackCount, downloaded;
+
+        Chunk() {
+        }
 
         Chunk(String id, String title, String artist, String composer, String album, String albumArtist, int year, int trackNumber,
               String genre, String albumArtUrl, Long estimatedSize, Long duration, String albumId, String artistId, String comment, int totalTrackCount, int downloaded) {
@@ -173,5 +170,7 @@ public class Gmusicnet extends AsyncTask<String, Void, Void> {
             this.downloaded = downloaded;
 
         }
+
     }
+
 }

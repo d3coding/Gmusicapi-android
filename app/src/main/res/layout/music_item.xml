@@ -11,6 +11,7 @@
     android:focusable="true"
     android:gravity="center_horizontal"
     android:orientation="horizontal"
+    android:foreground="?android:attr/selectableItemBackground"
     android:paddingStart="@dimen/row_padding_vertical"
     android:paddingTop="@dimen/row_padding_vertical"
     android:paddingEnd="@dimen/row_padding_vertical"
@@ -98,20 +99,5 @@
             android:text="@string/item_duration" />
 
     </RelativeLayout>
-
-    <LinearLayout
-        android:id="@+id/tree_dots"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="0"
-        android:gravity="center">
-
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:contentDescription="@string/null_description"
-            android:src="@drawable/abs" />
-
-    </LinearLayout>
 
 </LinearLayout>
