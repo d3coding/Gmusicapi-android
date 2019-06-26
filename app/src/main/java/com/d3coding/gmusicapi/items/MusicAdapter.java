@@ -9,26 +9,26 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.d3coding.gmusicapi.GmusicFile;
+import com.d3coding.gmusicapi.GMusicFile;
 import com.d3coding.gmusicapi.R;
 
 import java.util.List;
 
 public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder> {
 
-    private List<MusicItems> convertList;
-    GmusicFile gmusicFile;
+    private List<MusicItem> convertList;
+    private GMusicFile gmusicFile;
     private OnItemClickListener clickListener;
     private OnItemLongClickListener longListener;
 
-    public MusicAdapter(List<MusicItems> value) {
+    public MusicAdapter(List<MusicItem> value) {
         this.convertList = value;
     }
 
     @Override
     public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        gmusicFile = new GmusicFile(parent.getContext());
-        return new MyViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.music_item, parent, false));
+        gmusicFile = new GMusicFile(parent.getContext());
+        return new MyViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.rec_music_item, parent, false));
     }
 
     // Define the method that allows the parent activity or fragment to define the listener
@@ -43,7 +43,7 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
 
     @Override
     public void onBindViewHolder(final MyViewHolder holder, int position) {
-        MusicItems musicItems = convertList.get(position);
+        MusicItem musicItems = convertList.get(position);
 
         holder.title.setText(musicItems.getTitle());
         holder.album.setText(musicItems.getAlbum());
@@ -55,14 +55,10 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
         else
             holder.download_status.setBackgroundColor(Color.rgb(255, 0, 0));
 
-
         Bitmap bitmap = gmusicFile.getBitmapThumbImage(musicItems.getUid());
         if (bitmap == null)
             bitmap = gmusicFile.getDefaultThumbTemp(this, position, musicItems);
         holder.albumArt.setImageBitmap(bitmap);
-
-        // TODO: getDownloadStatus
-        // this.notifyItemChanged(position);
 
     }
 

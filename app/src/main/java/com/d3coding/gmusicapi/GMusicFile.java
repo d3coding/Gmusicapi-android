@@ -9,7 +9,7 @@ import android.view.View;
 import android.widget.LinearLayout;
 
 import com.d3coding.gmusicapi.items.MusicAdapter;
-import com.d3coding.gmusicapi.items.MusicItems;
+import com.d3coding.gmusicapi.items.MusicItem;
 import com.github.felixgail.gplaymusic.api.GPlayMusic;
 import com.github.felixgail.gplaymusic.model.enums.StreamQuality;
 import com.github.felixgail.gplaymusic.util.TokenProvider;
@@ -27,7 +27,7 @@ import java.nio.file.StandardCopyOption;
 
 import svarzee.gps.gpsoauth.AuthToken;
 
-public class GmusicFile {
+public class GMusicFile {
 
     private String MUSIC_CACHE_PATH;
     private String THUMB_CACHE_PATH;
@@ -35,11 +35,11 @@ public class GmusicFile {
 
     private Context context;
 
-    private Gmusicdb db;
+    private GMusicDB db;
 
-    public GmusicFile(Context context) {
+    public GMusicFile(Context context) {
         this.context = context;
-        db = new Gmusicdb(context);
+        db = new GMusicDB(context);
 
         MUSIC_CACHE_PATH = context.getApplicationInfo().dataDir + "/m_cache/";
         THUMB_CACHE_PATH = context.getApplicationInfo().dataDir + "/t_cache/";
@@ -58,7 +58,7 @@ public class GmusicFile {
     public void addToQueue(String uuid, LinearLayout linearLayoutComplete, LinearLayout linearLayoutDownloading) {
         new Thread(() -> {
             if (!scan(uuid)) {
-                Gmusicnet.Chunk chunk = db.selectByUID(uuid);
+                GMusicNet.Chunk chunk = db.selectByUID(uuid);
                 try {
 
                     Thread t = new Thread(() -> {
@@ -96,7 +96,7 @@ public class GmusicFile {
                     mp3file.save(FILE_PATCH + chunk.id + ".mp3");
 
                     // Success
-                    new Gmusicdb(context).updateDB(chunk.id, 1);
+                    new GMusicDB(context).updateDB(chunk.id, 1);
                     synchronized (this) {
                         ((Activity) context).runOnUiThread(() -> {
 
@@ -156,7 +156,7 @@ public class GmusicFile {
         return null;
     }
 
-    public Bitmap getDefaultThumbTemp(MusicAdapter musicAdapter, int x, MusicItems musicItems) {
+    public Bitmap getDefaultThumbTemp(MusicAdapter musicAdapter, int x, MusicItem musicItems) {
 
         File imgFile = new File(THUMB_CACHE_PATH + musicItems.getUid() + ".jpg");
         if (musicItems.getAlbumArtUrl() != null) {

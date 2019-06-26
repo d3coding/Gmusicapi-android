@@ -20,12 +20,12 @@ import java.util.concurrent.TimeUnit;
 
 import svarzee.gps.gpsoauth.AuthToken;
 
-public class Gmusicnet extends AsyncTask<String, Void, Void> {
+public class GMusicNet extends AsyncTask<String, Void, Void> {
 
     private List<Chunk> chunkList;
     private Context context;
 
-    Gmusicnet(Context context) {
+    GMusicNet(Context context) {
         this.context = context;
     }
 
@@ -116,7 +116,7 @@ public class Gmusicnet extends AsyncTask<String, Void, Void> {
                 chunkList.add(chunk);
             }
 
-            new Gmusicdb(context).insertIfNotExists(chunkList);
+            new GMusicDB(context).insertIfNotExists(chunkList);
 
             synchronized (this) {
                 ((Activity) context).runOnUiThread(() -> {

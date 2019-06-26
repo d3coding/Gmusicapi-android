@@ -7,6 +7,7 @@
     <string name="nav_header_desc">Navigation header</string>
     <string name="act_icon_refresh_log">Log</string>
     <string name="act_icon_search">Search</string>
+    <string name="act_icon_filter">Filter</string>
     <string name="action_recreate">Recreate</string>
     <string name="action_logout">Logout</string>
     <string name="action_refresh_db">Refresh DB</string>
@@ -46,6 +47,14 @@
     <string name="nav_s_other">Other</string>
     <string name="nav_log">Log</string>
     <string name="nav_info">Info</string>
+
+    <string name="radio_music">Music</string>
+    <string name="radio_artist">Artist</string>
+    <string name="radio_album">Album</string>
+    <string name="radio_genre">Genre</string>
+
+    <string name="radio_online">Online</string>
+    <string name="radio_offline">Offline</string>
 
     <string name="tab_music">Music</string>
     <string name="tab_artist">Artist</string>

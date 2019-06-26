@@ -27,7 +27,7 @@ import java.io.IOException;
 import svarzee.gps.gpsoauth.AuthToken;
 import svarzee.gps.gpsoauth.Gpsoauth;
 
-public class Login extends AppCompatActivity {
+public class LoginActivity extends AppCompatActivity {
 
     private static final Uri sUri = Uri.parse("content://com.google.android.gsf.gservices");
 
@@ -41,7 +41,7 @@ public class Login extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.login);
+        setContentView(R.layout.ac_login);
 
         checkBoxPass = findViewById(R.id.pass_check);
         checkBoxAid = findViewById(R.id.id_check);
@@ -77,8 +77,8 @@ public class Login extends AppCompatActivity {
                     InputMethodManager im = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                     im.hideSoftInputFromWindow(editTextPass.getWindowToken(), 0);
 
-                    AlertDialog.Builder builder = new AlertDialog.Builder(Login.this);
-                    ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.loading, null);
+                    AlertDialog.Builder builder = new AlertDialog.Builder(LoginActivity.this);
+                    ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.ad_loading, null);
                     builder.setView(vView);
                     builder.setCancelable(false);
                     final AlertDialog alert = builder.create();
@@ -88,7 +88,7 @@ public class Login extends AppCompatActivity {
                     tokenGen.execute();
 
                 } else {
-                    (new AlertDialog.Builder(Login.this)).setMessage(getString(R.string.login_alert_fill_in)).setPositiveButton("OK", null).create().show();
+                    (new AlertDialog.Builder(LoginActivity.this)).setMessage(getString(R.string.login_alert_fill_in)).setPositiveButton("OK", null).create().show();
                 }
 
             } else {
@@ -97,8 +97,8 @@ public class Login extends AppCompatActivity {
                     InputMethodManager im = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                     im.hideSoftInputFromWindow(editTextPass.getWindowToken(), 0);
 
-                    AlertDialog.Builder builder = new AlertDialog.Builder(Login.this);
-                    ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.loading, null);
+                    AlertDialog.Builder builder = new AlertDialog.Builder(LoginActivity.this);
+                    ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.ad_loading, null);
                     builder.setView(vView);
                     builder.setCancelable(false);
                     final AlertDialog alert = builder.create();
@@ -108,7 +108,7 @@ public class Login extends AppCompatActivity {
                     tokenGen.execute();
 
                 } else {
-                    (new AlertDialog.Builder(Login.this)).setMessage(getString(R.string.login_alert_fill_in)).setPositiveButton("OK", null).create().show();
+                    (new AlertDialog.Builder(LoginActivity.this)).setMessage(getString(R.string.login_alert_fill_in)).setPositiveButton("OK", null).create().show();
                 }
             }
 
@@ -118,13 +118,13 @@ public class Login extends AppCompatActivity {
     private void loginSuccessful(String stringRet) {
         Intent returnData = new Intent();
         returnData.putExtra(getString(R.string.token), stringRet);
-        setResult(MainActivity.LOGIN_ACTIVITY);
+        setResult(HomeActivity.LOGIN_ACTIVITY);
         setResult(RESULT_OK, returnData);
         finish();
     }
 
     private void loginError() {
-        (new AlertDialog.Builder(Login.this)).setMessage(getString(R.string.login_alert_error)).setPositiveButton(getString(R.string.box_ok), (DialogInterface dialog, int which) -> {
+        (new AlertDialog.Builder(LoginActivity.this)).setMessage(getString(R.string.login_alert_error)).setPositiveButton(getString(R.string.box_ok), (DialogInterface dialog, int which) -> {
             editTextPass.setText("");
             ((InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE)).toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
         }).create().show();
@@ -132,7 +132,7 @@ public class Login extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        (new AlertDialog.Builder(Login.this)).setMessage(getString(R.string.ask_exit)).setPositiveButton(getString(R.string.box_exit), (DialogInterface dialog, int which) -> {
+        (new AlertDialog.Builder(LoginActivity.this)).setMessage(getString(R.string.ask_exit)).setPositiveButton(getString(R.string.box_exit), (DialogInterface dialog, int which) -> {
             setResult(RESULT_CANCELED);
             finish();
         }).setNegativeButton(getString(R.string.box_cancel), null).create().show();

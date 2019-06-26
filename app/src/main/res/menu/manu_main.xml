@@ -18,6 +18,13 @@
         app:showAsAction="ifRoom" />
 
     <item
+        android:id="@+id/act_icon_filter"
+        android:icon="@drawable/ic_launcher_foreground"
+        android:orderInCategory="13"
+        android:title="@string/act_icon_filter"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/action_clean_db"
         android:orderInCategory="21"
         android:title="@string/action_clean_db"

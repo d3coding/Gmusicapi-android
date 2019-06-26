@@ -1,10 +1,10 @@
 package com.d3coding.gmusicapi.items;
 
-public class MusicItems {
+public class MusicItem {
     private String uid, albumArtUrl, title, artist, album, duration;
     private boolean downloadStatus;
 
-    public MusicItems(String uid, String albumArtUrl, String title, String artist, String album, String duration, boolean downloadStatus) {
+    public MusicItem(String uid, String albumArtUrl, String title, String artist, String album, String duration, boolean downloadStatus) {
         this.uid = uid;
         this.albumArtUrl = albumArtUrl;
         this.title = title;
@@ -40,9 +40,5 @@ public class MusicItems {
 
     public boolean getDownloadStatus() {
         return downloadStatus;
-    }
-
-    public void setUid(String uid) {
-        this.uid = uid;
     }
 }

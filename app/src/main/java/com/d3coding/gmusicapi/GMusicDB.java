@@ -6,12 +6,12 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.d3coding.gmusicapi.items.MusicItems;
+import com.d3coding.gmusicapi.items.MusicItem;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Gmusicdb extends SQLiteOpenHelper {
+public class GMusicDB extends SQLiteOpenHelper {
 
     private static final String duration = "duration";
 
@@ -58,7 +58,7 @@ public class Gmusicdb extends SQLiteOpenHelper {
 
     private static final String SQL_DELETE_POSTS = "DROP TABLE IF EXISTS ";
 
-    public Gmusicdb(Context context) {
+    public GMusicDB(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
@@ -94,7 +94,7 @@ public class Gmusicdb extends SQLiteOpenHelper {
         }
     }
 
-    void insertIfNotExists(List<Gmusicnet.Chunk> chunk) {
+    void insertIfNotExists(List<GMusicNet.Chunk> chunk) {
         SQLiteDatabase db = getWritableDatabase();
         for (int x = 0; x < chunk.size(); ++x) {
             ContentValues values = new ContentValues();
@@ -120,16 +120,16 @@ public class Gmusicdb extends SQLiteOpenHelper {
         db.close();
     }
 
-    public Gmusicnet.Chunk selectByUID(String uid) {
-        Gmusicnet.Chunk chunk = null;
+    public GMusicNet.Chunk selectByUID(String uid) {
+        GMusicNet.Chunk chunk = null;
 
         SQLiteDatabase db = this.getReadableDatabase();
-        String selection = Gmusicdb.uid + " = \"" + uid + "\"";
+        String selection = GMusicDB.uid + " = \"" + uid + "\"";
 
         Cursor cursor = db.query(TABLE, null, selection, null, null, null, null);
 
         if (cursor != null && cursor.moveToFirst())
-            chunk = new Gmusicnet.Chunk(cursor.getString(1),
+            chunk = new GMusicNet.Chunk(cursor.getString(1),
                     cursor.getString(2),
                     cursor.getString(3),
                     cursor.getString(4),
@@ -158,8 +158,8 @@ public class Gmusicdb extends SQLiteOpenHelper {
         return chunk;
     }
 
-    public List<MusicItems> getMusicItems(Sort sort, boolean desc, boolean onlyOffline) {
-        List<MusicItems> ret = new ArrayList<>();
+    public List<MusicItem> getMusicItems(Sort sort, boolean desc, boolean onlyOffline) {
+        List<MusicItem> ret = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
         String[] columns = {uid, albumArtUrl, title, artist, album, duration, downloaded};
@@ -189,7 +189,7 @@ public class Gmusicdb extends SQLiteOpenHelper {
         if (cursor != null && cursor.moveToFirst()) {
             do {
 
-                ret.add(new MusicItems(cursor.getString(0), cursor.getString(1), cursor.getString(2),
+                ret.add(new MusicItem(cursor.getString(0), cursor.getString(1), cursor.getString(2),
                         cursor.getString(3), cursor.getString(4), cursor.getString(5), cursor.getInt(6) != 0));
             } while (cursor.moveToNext());
         }
