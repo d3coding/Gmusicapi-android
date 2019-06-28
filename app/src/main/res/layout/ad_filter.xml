@@ -2,15 +2,18 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:padding="16dp">
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/constraintLayout"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
         android:padding="16dp"
+        app:layout_constraintEnd_toStartOf="@+id/constraintLayout2"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -29,14 +32,15 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
+            android:checkedButton="@id/radio_title"
             app:layout_constraintStart_toStartOf="@+id/textView1"
             app:layout_constraintTop_toBottomOf="@+id/textView1">
 
             <RadioButton
-                android:id="@+id/radio_music"
+                android:id="@+id/radio_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/radio_music" />
+                android:text="@string/radio_title" />
 
             <RadioButton
                 android:id="@+id/radio_artist"
@@ -62,10 +66,12 @@
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/constraintLayout2"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
+        android:layout_marginEnd="8dp"
         android:padding="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/constraintLayout"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -84,8 +90,15 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
+            android:checkedButton="@id/radio_all"
             app:layout_constraintStart_toStartOf="@+id/textView3"
             app:layout_constraintTop_toBottomOf="@+id/textView3">
+
+            <RadioButton
+                android:id="@+id/radio_all"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/radio_all" />
 
             <RadioButton
                 android:id="@+id/radio_online"
@@ -108,9 +121,11 @@
         android:id="@+id/constraintLayout3"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
         android:padding="16dp"
-        app:layout_constraintEnd_toEndOf="@+id/constraintLayout2"
-        app:layout_constraintStart_toStartOf="@+id/constraintLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/constraintLayout">
 
         <TextView
@@ -123,7 +138,7 @@
             tools:text="Filter By:" />
 
         <EditText
-            android:id="@+id/editText"
+            android:id="@+id/filter_text"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"

@@ -158,13 +158,30 @@ public class GMusicDB extends SQLiteOpenHelper {
         return chunk;
     }
 
-    public List<MusicItem> getMusicItems(Sort sort, boolean desc, boolean onlyOffline) {
+    public List<MusicItem> getMusicItems(Sort sort, SortOnline sortOnline, String filterTitle, boolean desc) {
         List<MusicItem> ret = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
         String[] columns = {uid, albumArtUrl, title, artist, album, duration, downloaded};
+
         String order = null;
-        String selection = null;
+
+        StringBuilder selection = new StringBuilder();
+
+        if (!filterTitle.equals(""))
+            selection.append(title + " LIKE \'%" + filterTitle + "%\'");
+
+        if (sortOnline != SortOnline.all) {
+            if (!filterTitle.equals(""))
+                selection.append(" AND ");
+
+            if (sortOnline == SortOnline.offline)
+                selection.append("downloaded = 1");
+            else if (sortOnline == SortOnline.online)
+                selection.append("downloaded = 0");
+
+        }
+
         if (sort == Sort.title)
             order = title;
         else if (sort == Sort.artist)
@@ -179,12 +196,7 @@ public class GMusicDB extends SQLiteOpenHelper {
         else
             order += " ASC";
 
-
-        if (onlyOffline)
-            selection = "downloaded = 1";
-
-
-        Cursor cursor = db.query(TABLE, columns, selection, null, null, null, order);
+        Cursor cursor = db.query(TABLE, columns, selection.toString(), null, null, null, order);
 
         if (cursor != null && cursor.moveToFirst()) {
             do {
@@ -240,6 +252,10 @@ public class GMusicDB extends SQLiteOpenHelper {
 
     public enum Sort {
         title, artist, album, genre
+    }
+
+    public enum SortOnline {
+        all, offline, online
     }
 
 }

@@ -55,7 +55,7 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
         else
             holder.download_status.setBackgroundColor(Color.rgb(255, 0, 0));
 
-        Bitmap bitmap = gmusicFile.getBitmapThumbImage(musicItems.getUid());
+        Bitmap bitmap = gmusicFile.getBitmapThumbImage(musicItems.getUUID());
         if (bitmap == null)
             bitmap = gmusicFile.getDefaultThumbTemp(this, position, musicItems);
         holder.albumArt.setImageBitmap(bitmap);

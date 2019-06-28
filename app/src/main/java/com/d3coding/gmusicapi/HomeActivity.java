@@ -7,9 +7,12 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -27,14 +30,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.d3coding.gmusicapi.items.MusicAdapter;
 import com.d3coding.gmusicapi.items.MusicItem;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,6 +55,9 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     private RecyclerView recyclerView;
     private List<MusicItem> ConvertList = new ArrayList<>();
     private MusicAdapter mAdapter;
+
+    private GMusicDB.Sort sort;
+    private GMusicDB.SortOnline sortOnline;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,18 +90,20 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                 recyclerView.setAdapter(mAdapter);
 
                 {
-                    if (db == null) {
+                    if (db == null)
                         db = new GMusicDB(this);
 
-                        // TODO: Filter
-                        ConvertList.addAll(db.getMusicItems(GMusicDB.Sort.title, false, false));
-                    }
+                    sort = GMusicDB.Sort.title;
+                    sortOnline = GMusicDB.SortOnline.all;
+
+                    ConvertList.addAll(db.getMusicItems(sort, sortOnline, "", false));
+
                     mAdapter.notifyDataSetChanged();
                 }
 
                 mAdapter.setOnItemClickListener((view, position) -> {
 
-                    Bitmap bitmap = gmusicFile.getBitmapThumbImage(ConvertList.get(position).getUid());
+                    Bitmap bitmap = gmusicFile.getBitmapThumbImage(ConvertList.get(position).getUUID());
                     if (bitmap == null)
                         bitmap = gmusicFile.getDefaultThumb();
 
@@ -122,7 +133,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
                 mAdapter.setOnItemLongClickListener((view, position) -> {
 
-                    Bitmap bitmap = gmusicFile.getBitmapThumbImage(ConvertList.get(position).getUid());
+                    Bitmap bitmap = gmusicFile.getBitmapThumbImage(ConvertList.get(position).getUUID());
                     if (bitmap == null)
                         bitmap = gmusicFile.getDefaultThumb();
 
@@ -131,21 +142,44 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
                     LinearLayout linearLayoutComplete = vView.findViewById(R.id.status_complete);
                     LinearLayout linearLayoutDownloading = vView.findViewById(R.id.status_downloading);
+                    vView.findViewById(R.id.status_downloading).setVisibility(View.GONE);
 
                     ((ImageView) vView.findViewById(R.id.opt_album_art)).setImageBitmap(bitmap);
                     ((TextView) vView.findViewById(R.id.opt_title)).setText(ConvertList.get(position).getTitle());
                     ((TextView) vView.findViewById(R.id.opt_artist)).setText(ConvertList.get(position).getArtist());
 
                     if (ConvertList.get(position).getDownloadStatus()) {
+
                         linearLayoutComplete.setVisibility(View.VISIBLE);
                         linearLayoutDownloading.setVisibility(View.GONE);
+
                     } else {
+
                         linearLayoutComplete.setVisibility(View.GONE);
                         linearLayoutDownloading.setVisibility(View.VISIBLE);
 
                         // TODO: getDownloadStatus
-                        gmusicFile.addToQueue(ConvertList.get(position).getUid(), linearLayoutComplete, linearLayoutDownloading);
+                        gmusicFile.addToQueue(ConvertList.get(position).getUUID(), linearLayoutComplete, linearLayoutDownloading);
                     }
+
+                    vView.findViewById(R.id.opt_bt_delete).setOnClickListener((view2) -> Toast.makeText(this, getString(R.string.null_description), Toast.LENGTH_SHORT).show());
+
+                    vView.findViewById(R.id.opt_bt_play).setOnClickListener((view2) -> {
+                        Uri uri = FileProvider.getUriForFile(this, this.getPackageName() + ".fileprovider",
+                                new File(new File(Environment.getExternalStorageDirectory(), "Gmusicapi"), ConvertList.get(position).getUUID() + ".mp3"));
+
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        intent.setDataAndType(uri, getContentResolver().getType(uri))
+                                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivity(intent);
+
+                    });
+
+                    vView.findViewById(R.id.opt_bt_open).setOnClickListener((view2) -> {
+                        Uri uri = Uri.parse(Environment.getExternalStorageDirectory() + "/Gmusicapi/");
+                        startActivity(new Intent(Intent.ACTION_VIEW).setDataAndType(uri, "resource/folder"));
+
+                    });
 
                     builder.setView(vView).create().show();
 
@@ -204,14 +238,43 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             return true;
         } else if (id == R.id.act_icon_search) {
             return true;
-        } else if (id == R.id.act_icon_search) {
-            return true;
         } else if (id == R.id.act_icon_filter) {
             {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.ad_filter, null);
 
                 builder.setPositiveButton(R.string.act_icon_filter, (dialog, which) -> {
+
+                    if (db == null)
+                        db = new GMusicDB(this);
+
+                    int x = ((RadioGroup) vView.findViewById(R.id.radioGroup1)).getCheckedRadioButtonId();
+                    int y = ((RadioGroup) vView.findViewById(R.id.radioGroup2)).getCheckedRadioButtonId();
+
+                    if (x == R.id.radio_title) {
+                        sort = GMusicDB.Sort.title;
+                    } else if (x == R.id.radio_artist) {
+                        sort = GMusicDB.Sort.artist;
+                    } else if (x == R.id.radio_album) {
+                        sort = GMusicDB.Sort.album;
+                    } else if (x == R.id.radio_genre) {
+                        sort = GMusicDB.Sort.genre;
+                    } else
+                        sort = null;
+
+                    if (y == R.id.radio_all) {
+                        sortOnline = GMusicDB.SortOnline.all;
+                    } else if (y == R.id.radio_online) {
+                        sortOnline = GMusicDB.SortOnline.online;
+                    } else if (y == R.id.radio_offline) {
+                        sortOnline = GMusicDB.SortOnline.offline;
+                    } else
+                        sortOnline = null;
+
+                    ConvertList.clear();
+                    ConvertList.addAll(db.getMusicItems(sort, sortOnline, ((EditText) vView.findViewById(R.id.filter_text)).getText().toString(), false));
+
+                    mAdapter.notifyDataSetChanged();
 
                 }).setView(vView).create().show();
 

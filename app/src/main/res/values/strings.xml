@@ -48,11 +48,12 @@
     <string name="nav_log">Log</string>
     <string name="nav_info">Info</string>
 
-    <string name="radio_music">Music</string>
+    <string name="radio_title">Title</string>
     <string name="radio_artist">Artist</string>
     <string name="radio_album">Album</string>
     <string name="radio_genre">Genre</string>
 
+    <string name="radio_all">All</string>
     <string name="radio_online">Online</string>
     <string name="radio_offline">Offline</string>
 
@@ -63,6 +64,9 @@
 
     <string name="login_alert_fill_in">Please fill in all fields!</string>
     <string name="login_alert_error">Wrong username, password or android id!</string>
+
+    <string name="opt_st_downloading">Downloading...</string>
+    <string name="opt_st_no_internet">No internet connection!</string>
 
     <string name="ask_logout">Logout?</string>
     <string name="ask_exit">Leave?</string>
@@ -84,6 +88,6 @@
     <string name="item_album">album</string>
     <string name="item_duration">duration</string>
 
-    <string name="null_description">null</string>
+    <string name="null_description">Not implemented!</string>
 
 </resources>
