@@ -58,7 +58,7 @@ public class GMusicDB extends SQLiteOpenHelper {
 
     private static final String SQL_DELETE_POSTS = "DROP TABLE IF EXISTS ";
 
-    public GMusicDB(Context context) {
+    GMusicDB(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
@@ -120,7 +120,7 @@ public class GMusicDB extends SQLiteOpenHelper {
         db.close();
     }
 
-    public GMusicNet.Chunk selectByUID(String uid) {
+    GMusicNet.Chunk selectByUID(String uid) {
         GMusicNet.Chunk chunk = null;
 
         SQLiteDatabase db = this.getReadableDatabase();
@@ -158,7 +158,7 @@ public class GMusicDB extends SQLiteOpenHelper {
         return chunk;
     }
 
-    public List<MusicItem> getMusicItems(Sort sort, SortOnline sortOnline, String filterTitle, boolean desc) {
+    List<MusicItem> getMusicItems(Sort sort, SortOnline sortOnline, String filterTitle, boolean desc) {
         List<MusicItem> ret = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -216,7 +216,7 @@ public class GMusicDB extends SQLiteOpenHelper {
         return ret;
     }
 
-    public String getThumbURL(String uuid) {
+    String getThumbURL(String uuid) {
         SQLiteDatabase db = this.getReadableDatabase();
 
         String[] columns = {albumArtUrl};
@@ -238,7 +238,7 @@ public class GMusicDB extends SQLiteOpenHelper {
         return ret;
     }
 
-    public void updateDB(String uuid, int value) {
+    void updateDB(String uuid, int value) {
         ContentValues cv = new ContentValues();
         cv.put(downloaded, value);
         SQLiteDatabase db = getWritableDatabase();
@@ -248,6 +248,19 @@ public class GMusicDB extends SQLiteOpenHelper {
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
+    }
+
+    void removeThumbLink(String uuid) {
+        ContentValues cv = new ContentValues();
+        cv.put(albumArtUrl, "");
+        SQLiteDatabase db = getWritableDatabase();
+        db.update(TABLE, cv, uid + " = \"" + uuid + "\"", null);
+        try {
+            db.close();
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+
     }
 
     public enum Sort {

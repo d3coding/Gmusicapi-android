@@ -1,15 +1,10 @@
 package com.d3coding.gmusicapi;
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
-import android.view.View;
-import android.widget.LinearLayout;
 
-import com.d3coding.gmusicapi.items.MusicAdapter;
-import com.d3coding.gmusicapi.items.MusicItem;
 import com.github.felixgail.gplaymusic.api.GPlayMusic;
 import com.github.felixgail.gplaymusic.model.enums.StreamQuality;
 import com.github.felixgail.gplaymusic.util.TokenProvider;
@@ -18,6 +13,7 @@ import com.mpatric.mp3agic.ID3v24Tag;
 import com.mpatric.mp3agic.Mp3File;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -41,8 +37,9 @@ public class GMusicFile {
         this.context = context;
         db = new GMusicDB(context);
 
-        MUSIC_CACHE_PATH = context.getApplicationInfo().dataDir + "/m_cache/";
-        THUMB_CACHE_PATH = context.getApplicationInfo().dataDir + "/t_cache/";
+
+        MUSIC_CACHE_PATH = context.getCacheDir() + "/m_cache/";
+        THUMB_CACHE_PATH = context.getCacheDir() + "/t_cache/";
 
         File music_cache_patch = new File(MUSIC_CACHE_PATH),
                 thumb_cache_patch = new File(THUMB_CACHE_PATH), file_patch = new File(FILE_PATCH);
@@ -55,72 +52,52 @@ public class GMusicFile {
             file_patch.mkdir();
     }
 
-    public void addToQueue(String uuid, LinearLayout linearLayoutComplete, LinearLayout linearLayoutDownloading) {
-        new Thread(() -> {
-            if (!scan(uuid)) {
-                GMusicNet.Chunk chunk = db.selectByUID(uuid);
-                try {
+    int getQueue(String uuid) {
+        if (!scan(uuid)) {
+            GMusicNet.Chunk chunk = db.selectByUID(uuid);
+            try {
+                AuthToken authToken = TokenProvider.provideToken(context.getSharedPreferences(context.getString(R.string.preferences_user)
+                        , Context.MODE_PRIVATE).getString(context.getString(R.string.token), ""));
+                new GPlayMusic.Builder().setAuthToken(authToken).build().getTrackApi()
+                        .getTrack(chunk.id).download(StreamQuality.HIGH, Paths.get(getPathMP3(chunk.id)));
 
-                    Thread t = new Thread(() -> {
-                        try {
-                            AuthToken authToken = TokenProvider.provideToken(context.getSharedPreferences(context.getString(R.string.preferences_user)
-                                    , Context.MODE_PRIVATE).getString(context.getString(R.string.token), ""));
-                            new GPlayMusic.Builder().setAuthToken(authToken).build().getTrackApi()
-                                    .getTrack(chunk.id).download(StreamQuality.HIGH, Paths.get(getPathMP3(chunk.id)));
+                Mp3File mp3file = new Mp3File(getPathMP3(chunk.id));
+                ID3v2 id3v2 = new ID3v24Tag();
+                id3v2.setTitle(chunk.title);
+                id3v2.setArtist(chunk.artist);
+                id3v2.setComposer(chunk.composer);
+                id3v2.setAlbum(chunk.album);
+                id3v2.setAlbumArtist(chunk.albumArtist);
+                id3v2.setYear(String.valueOf(chunk.year));
+                id3v2.setGenreDescription(chunk.genre);
 
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    });
-                    t.start();
+                if (existsThumbImagePath(uuid))
+                    id3v2.setAlbumImage(Files.readAllBytes(Paths.get(getPathJPG(chunk.id))),
+                            Files.probeContentType(Paths.get(getPathJPG(chunk.id))));
 
-                    if (t.isAlive())
-                        t.join();
+                mp3file.setId3v2Tag(id3v2);
+                mp3file.save(FILE_PATCH + chunk.id + ".mp3");
 
-                    Mp3File mp3file = new Mp3File(getPathMP3(chunk.id));
-                    ID3v2 id3v2 = new ID3v24Tag();
-                    id3v2.setTitle(chunk.title);
-                    id3v2.setArtist(chunk.artist);
-                    id3v2.setComposer(chunk.composer);
-                    id3v2.setAlbum(chunk.album);
-                    id3v2.setAlbumArtist(chunk.albumArtist);
-                    id3v2.setYear(String.valueOf(chunk.year));
-                    id3v2.setGenreDescription(chunk.genre);
+                // Success
+                new GMusicDB(context).updateDB(chunk.id, 1);
+                return 1;
 
-                    if (existsThumbImagePath(uuid)) {
-                        id3v2.setAlbumImage(Files.readAllBytes(Paths.get(getPathJPG(chunk.id))),
-                                Files.probeContentType(Paths.get(getPathJPG(chunk.id))));
-                    }
-
-                    mp3file.setId3v2Tag(id3v2);
-                    mp3file.save(FILE_PATCH + chunk.id + ".mp3");
-
-                    // Success
-                    new GMusicDB(context).updateDB(chunk.id, 1);
-                    synchronized (this) {
-                        ((Activity) context).runOnUiThread(() -> {
-
-                            linearLayoutComplete.setVisibility(View.VISIBLE);
-                            linearLayoutDownloading.setVisibility(View.GONE);
-                        });
-                    }
-
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                return 0;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return 0;
             }
-        }).start();
-
+        } else
+            return 1;
     }
 
-
-    public boolean scan(String uuid) {
-        File file = new File(getPathMP3(uuid));
-        return file.exists();
+    private boolean scan(String uuid) {
+        return new File(FILE_PATCH + uuid + ".mp3").exists();
     }
 
-    public boolean existsThumbImagePath(String uuid) {
+    private boolean existsThumbImagePath(String uuid) {
         File imgFile = new File(getPathJPG(uuid));
         if (imgFile.exists())
             return true;
@@ -128,7 +105,7 @@ public class GMusicFile {
             return false;
         } else {
             try {
-                return (!BitmapFactory.decodeFile(downloadThumbImage(uuid)).equals(""));
+                return (downloadThumbImage(uuid).equals(""));
             } catch (MalformedURLException e) {
                 e.printStackTrace();
                 return false;
@@ -156,40 +133,37 @@ public class GMusicFile {
         return null;
     }
 
-    public Bitmap getDefaultThumbTemp(MusicAdapter musicAdapter, int x, MusicItem musicItems) {
-
-        File imgFile = new File(getPathJPG(musicItems.getUUID()));
-        if (musicItems.getAlbumArtUrl() != null) {
+    public int tryDownloadThumb(String uuid, String albumArtUrl) {
+        File imgFile = new File(getPathJPG(uuid));
+        if (!albumArtUrl.equals("")) {
             try {
-                URL url = new URL(musicItems.getAlbumArtUrl());
-                new Thread(() -> {
-                    try {
-                        if (!imgFile.exists())
-                            Files.copy(url.openStream(), Paths.get(imgFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
+                URL url = new URL(albumArtUrl);
 
-                        synchronized (this) {
-                            ((Activity) context).runOnUiThread(() -> musicAdapter.notifyItemChanged(x));
-                        }
+                if (!imgFile.exists())
+                    Files.copy(url.openStream(), Paths.get(imgFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
 
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }).start();
             } catch (MalformedURLException e) {
                 e.printStackTrace();
-            } finally {
-                return BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+                new GMusicDB(context).removeThumbLink(uuid);
+                return 2;
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                new GMusicDB(context).removeThumbLink(uuid);
+                return 2;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return 0;
             }
-        }
-
-        return BitmapFactory.decodeResource(context.getResources(), R.drawable.no_image);
+            return 1;
+        } else
+            return 0;
     }
 
     public Bitmap getDefaultThumb() {
         return BitmapFactory.decodeResource(context.getResources(), R.drawable.no_image);
     }
 
-    private String getPathJPG(String uuid) {
+    public String getPathJPG(String uuid) {
         return THUMB_CACHE_PATH + uuid + ".jpg";
     }
 

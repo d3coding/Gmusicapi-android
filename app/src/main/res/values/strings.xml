@@ -65,15 +65,13 @@
     <string name="login_alert_fill_in">Please fill in all fields!</string>
     <string name="login_alert_error">Wrong username, password or android id!</string>
 
-    <string name="opt_st_downloading">Downloading...</string>
+    <string name="opt_st_downloading">Downloading&#8230;</string>
     <string name="opt_st_no_internet">No internet connection!</string>
 
     <string name="ask_logout">Logout?</string>
     <string name="ask_exit">Leave?</string>
 
-    <string name="box_ok">ok</string>
     <string name="box_exit">exit</string>
-    <string name="box_cancel">cancel</string>
     <string name="box_confirm">confirm</string>
 
     <string name="token">token</string>
@@ -87,6 +85,7 @@
     <string name="item_separator">-</string>
     <string name="item_album">album</string>
     <string name="item_duration">duration</string>
+    <string name="item_status">status</string>
 
     <string name="null_description">Not implemented!</string>
 

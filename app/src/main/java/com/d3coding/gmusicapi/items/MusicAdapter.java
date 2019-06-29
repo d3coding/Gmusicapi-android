@@ -1,6 +1,6 @@
 package com.d3coding.gmusicapi.items;
 
-import android.graphics.Bitmap;
+import android.app.Activity;
 import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -12,6 +12,7 @@ import android.widget.TextView;
 import com.d3coding.gmusicapi.GMusicFile;
 import com.d3coding.gmusicapi.R;
 
+import java.io.File;
 import java.util.List;
 
 public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder> {
@@ -50,15 +51,32 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
         holder.artist.setText(musicItems.getArtist());
         holder.time.setText(musicItems.getDuration());
 
-        if (musicItems.getDownloadStatus())
-            holder.download_status.setBackgroundColor(Color.rgb(0, 255, 0));
-        else
-            holder.download_status.setBackgroundColor(Color.rgb(255, 0, 0));
+        if (musicItems.getDownloadStatus()) {
+            holder.status.setText(R.string.radio_offline);
+            holder.status.setTextColor(Color.rgb(0, 192, 0));
+        } else {
+            holder.status.setText(R.string.radio_online);
+            holder.status.setTextColor(Color.rgb(192, 0, 0));
+        }
 
-        Bitmap bitmap = gmusicFile.getBitmapThumbImage(musicItems.getUUID());
-        if (bitmap == null)
-            bitmap = gmusicFile.getDefaultThumbTemp(this, position, musicItems);
-        holder.albumArt.setImageBitmap(bitmap);
+        if (new File(gmusicFile.getPathJPG(musicItems.getUUID())).exists())
+            holder.albumArt.setImageBitmap(gmusicFile.getBitmapThumbImage(musicItems.getUUID()));
+        else {
+            if (musicItems.getAlbumArtUrl().equals(""))
+                holder.albumArt.setImageBitmap(gmusicFile.getDefaultThumb());
+            else {
+                new Thread(() -> {
+
+                    if (gmusicFile.tryDownloadThumb(musicItems.getUUID(), musicItems.getAlbumArtUrl()) == 2)
+                        musicItems.removeURL();
+
+                    synchronized (this) {
+                        ((Activity) holder.title.getContext()).runOnUiThread(() -> notifyItemChanged(position));
+                    }
+
+                }).start();
+            }
+        }
 
     }
 
@@ -78,8 +96,8 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
     }
 
     class MyViewHolder extends RecyclerView.ViewHolder {
-        TextView title, artist, album, time;
-        ImageView albumArt, download_status;
+        TextView title, artist, album, time, status;
+        ImageView albumArt;
 
         MyViewHolder(View view) {
             super(view);
@@ -108,7 +126,7 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
             album = view.findViewById(R.id.album);
             albumArt = view.findViewById(R.id.thumb);
             time = view.findViewById(R.id.time);
-            download_status = view.findViewById(R.id.download_status);
+            status = view.findViewById(R.id.status);
         }
     }
 

@@ -22,7 +22,7 @@ public class MusicItem {
         return album;
     }
 
-    public String getAlbumArtUrl() {
+    String getAlbumArtUrl() {
         return albumArtUrl;
     }
 
@@ -40,5 +40,9 @@ public class MusicItem {
 
     public boolean getDownloadStatus() {
         return downloadStatus;
+    }
+
+    void removeURL() {
+        albumArtUrl = "";
     }
 }

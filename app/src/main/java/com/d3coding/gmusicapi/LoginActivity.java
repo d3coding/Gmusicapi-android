@@ -124,7 +124,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void loginError() {
-        (new AlertDialog.Builder(LoginActivity.this)).setMessage(getString(R.string.login_alert_error)).setPositiveButton(getString(R.string.box_ok), (DialogInterface dialog, int which) -> {
+        (new AlertDialog.Builder(LoginActivity.this)).setMessage(getString(R.string.login_alert_error)).setPositiveButton(getString(android.R.string.ok), (DialogInterface dialog, int which) -> {
             editTextPass.setText("");
             ((InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE)).toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
         }).create().show();
@@ -135,7 +135,7 @@ public class LoginActivity extends AppCompatActivity {
         (new AlertDialog.Builder(LoginActivity.this)).setMessage(getString(R.string.ask_exit)).setPositiveButton(getString(R.string.box_exit), (DialogInterface dialog, int which) -> {
             setResult(RESULT_CANCELED);
             finish();
-        }).setNegativeButton(getString(R.string.box_cancel), null).create().show();
+        }).setNegativeButton(getString(android.R.string.cancel), null).create().show();
     }
 
     private class TokenGen extends AsyncTask<Void, Void, Void> {

@@ -9,41 +9,26 @@
     android:baselineAligned="false"
     android:clickable="true"
     android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground"
     android:gravity="center_horizontal"
     android:orientation="horizontal"
-    android:foreground="?android:attr/selectableItemBackground"
     android:paddingStart="@dimen/row_padding_vertical"
     android:paddingTop="@dimen/row_padding_vertical"
     android:paddingEnd="@dimen/row_padding_vertical"
     android:paddingBottom="@dimen/row_padding_vertical">
 
-    <RelativeLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
-
-        <ImageView
-            android:id="@+id/thumb"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:background="@android:color/holo_orange_dark"
-            android:contentDescription="@string/null_description" />
-
-        <ImageView
-            android:id="@+id/download_status"
-            android:layout_width="10dp"
-            android:layout_height="10dp"
-            android:layout_alignBottom="@id/download_status"
-            android:background="@color/colorPrimary"
-            android:contentDescription="@string/null_description" />
-
-    </RelativeLayout>
+    <ImageView
+        android:id="@+id/thumb"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginEnd="16dp"
+        android:background="@android:color/holo_orange_dark"
+        android:contentDescription="@string/null_description" />
 
     <RelativeLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:paddingStart="@dimen/row_padding_vertical"
-        android:paddingEnd="0dp">
+        android:layout_weight="1">
 
         <TextView
             android:id="@+id/title"
@@ -89,14 +74,37 @@
 
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/time"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/artist_album"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="@string/item_duration" />
+            android:layout_below="@id/artist_album">
+
+            <TextView
+                android:id="@+id/time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="5dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/item_duration" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="5dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/item_separator" />
+
+            <TextView
+                android:id="@+id/status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/item_status" />
+
+        </LinearLayout>
 
     </RelativeLayout>
 
