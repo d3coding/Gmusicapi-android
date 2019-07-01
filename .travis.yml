@@ -19,9 +19,8 @@ android:
   - android-sdk-license-.+
   - google-gdk-license-.+
 before_install:
-- openssl aes-256-cbc -K $encrypted_5d278c7eb6ac_key -iv $encrypted_5d278c7eb6ac_iv
-  -in keystore.jks.enc -out keystore.jks -d
-  - openssl aes-256-cbc -K $encrypted_5d278c7eb6ac_key -iv $encrypted_5d278c7eb6ac_iv -in github_deploy_key.enc -out github_deploy_key -d
+- openssl aes-256-cbc -K $encrypted_5d278c7eb6ac_key -iv $encrypted_5d278c7eb6ac_iv -in keystore.jks.enc -out keystore.jks -d
+- openssl aes-256-cbc -K $encrypted_5d278c7eb6ac_key -iv $encrypted_5d278c7eb6ac_iv -in github_deploy_key.enc -out github_deploy_key -d
   - chmod 600 github_deploy_key
   - eval $(ssh-agent -s)
   - ssh-add github_deploy_key
