@@ -22,7 +22,6 @@ import svarzee.gps.gpsoauth.AuthToken;
 
 public class GMusicNet extends AsyncTask<String, Void, Void> {
 
-    private List<Chunk> chunkList;
     private Context context;
 
     GMusicNet(Context context) {
@@ -33,16 +32,15 @@ public class GMusicNet extends AsyncTask<String, Void, Void> {
     protected Void doInBackground(String... strings) {
         try {
             synchronized (this) {
-                ((Activity) context).runOnUiThread(() -> {
-                    Toast.makeText(context, "Updating database...", Toast.LENGTH_SHORT).show();
-                });
+                ((Activity) context).runOnUiThread(() -> Toast.makeText(context, "Updating database...", Toast.LENGTH_SHORT).show());
             }
+
             AuthToken authToken;
 
             if (strings.length > 0)
                 authToken = TokenProvider.provideToken(strings[0]);
             else
-                throw new Exception("Invalid token");
+                throw new NullPointerException("Null token");
 
             GPlayMusic api = new GPlayMusic.Builder().setAuthToken(authToken).build();
             TrackApi trackApi = api.getTrackApi();
@@ -50,83 +48,81 @@ public class GMusicNet extends AsyncTask<String, Void, Void> {
 
             System.out.println("Database size: " + listTrack.size());
 
+            List<GMusicDB.TrackMetadata> chunkList = new ArrayList<>();
 
-            chunkList = new ArrayList<>();
+            for (Track track : listTrack) {
+                GMusicDB.TrackMetadata trackMetadata = new GMusicDB.TrackMetadata();
 
-            for (int x = 0; x < listTrack.size(); ++x) {
-                Chunk chunk = new Chunk();
-                chunk.id = listTrack.get(x).getID();
-                chunk.title = listTrack.get(x).getTitle();
-                chunk.artist = listTrack.get(x).getArtist();
-                chunk.composer = listTrack.get(x).getComposer();
-                chunk.album = listTrack.get(x).getAlbum();
-                chunk.albumArtist = listTrack.get(x).getAlbumArtist();
+                trackMetadata.uuid = track.getID();
+                trackMetadata.title = track.getTitle();
+                trackMetadata.artist = track.getArtist();
+                trackMetadata.composer = track.getComposer();
+                trackMetadata.album = track.getAlbum();
+                trackMetadata.albumArtist = track.getAlbumArtist();
 
                 // year
-                OptionalInt optionalInt = listTrack.get(x).getYear();
+                OptionalInt optionalInt = track.getYear();
                 if (optionalInt.isPresent())
-                    chunk.year = optionalInt.getAsInt();
+                    trackMetadata.year = optionalInt.getAsInt();
                 else
-                    chunk.year = 0;
+                    trackMetadata.year = 0;
 
-                chunk.trackNumber = listTrack.get(x).getTrackNumber();
+                trackMetadata.trackNumber = track.getTrackNumber();
 
                 // genre
-                Optional<String> optionalGenre = listTrack.get(x).getGenre();
+                Optional<String> optionalGenre = track.getGenre();
                 if (optionalGenre.isPresent())
-                    chunk.genre = optionalGenre.get();
+                    trackMetadata.genre = optionalGenre.get();
                 else
-                    chunk.genre = "";
+                    trackMetadata.genre = "";
 
                 // albumArtUrl
-                Optional<List<ArtRef>> optionalArtRefs = listTrack.get(x).getAlbumArtRef();
+                Optional<List<ArtRef>> optionalArtRefs = track.getAlbumArtRef();
                 if (optionalArtRefs.isPresent())
-                    chunk.albumArtUrl = optionalArtRefs.get().get(0).getUrl();
+                    trackMetadata.albumArtUrl = optionalArtRefs.get().get(0).getUrl();
                 else
-                    chunk.albumArtUrl = "";
+                    trackMetadata.albumArtUrl = "";
 
-                chunk.estimatedSize = listTrack.get(x).getEstimatedSize();
-                chunk.albumId = listTrack.get(x).getAlbumId();
+                trackMetadata.estimatedSize = track.getEstimatedSize();
+                trackMetadata.albumId = track.getAlbumId();
                 // artistId
-                Optional<List<String>> optionalArtistId = listTrack.get(x).getArtistId();
+                Optional<List<String>> optionalArtistId = track.getArtistId();
                 if (optionalArtistId.isPresent()) {
                     StringBuilder stringBuilder = new StringBuilder(optionalArtistId.get().get(0));
                     for (int y = 1; y < optionalArtistId.get().size(); ++y)
                         stringBuilder.append(optionalArtistId.get().get(y));
-                    chunk.artistId = stringBuilder.toString();
+                    trackMetadata.artistId = stringBuilder.toString();
                 } else
-                    chunk.artistId = "";
+                    trackMetadata.artistId = "";
 
                 // comment
-                Optional<String> optionalComment = listTrack.get(x).getComment();
+                Optional<String> optionalComment = track.getComment();
                 if (optionalComment.isPresent())
-                    chunk.comment = optionalComment.get();
+                    trackMetadata.comment = optionalComment.get();
                 else
-                    chunk.comment = "";
+                    trackMetadata.comment = "";
 
-                chunk.duration = listTrack.get(x).getDurationMillis();
+                trackMetadata.durationMillis = track.getDurationMillis();
 
                 // totalTrackCount
-                OptionalInt optionalTotalTrackCount = listTrack.get(x).getTotalTrackCount();
+                OptionalInt optionalTotalTrackCount = track.getTotalTrackCount();
                 if (optionalTotalTrackCount.isPresent())
-                    chunk.totalTrackCount = optionalTotalTrackCount.getAsInt();
+                    trackMetadata.totalTrackCount = optionalTotalTrackCount.getAsInt();
                 else
-                    chunk.totalTrackCount = 0;
+                    trackMetadata.totalTrackCount = 0;
 
-                chunkList.add(chunk);
+                chunkList.add(trackMetadata);
             }
 
-            new GMusicDB(context).insertIfNotExists(chunkList);
+            new GMusicDB(context).insertByTrackMetadata(chunkList);
 
             synchronized (this) {
-                ((Activity) context).runOnUiThread(() -> {
-                    Toast.makeText(context, "Database info download complete...", Toast.LENGTH_LONG).show();
-                });
+                ((Activity) context).runOnUiThread(() -> Toast.makeText(context, "Database info download complete...", Toast.LENGTH_LONG).show());
             }
 
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (Exception e) {
+        } catch (NullPointerException e) {
             e.printStackTrace();
         }
 
@@ -136,41 +132,5 @@ public class GMusicNet extends AsyncTask<String, Void, Void> {
         return null;
     }
 
-    public static class Chunk {
-
-        public String id, title, artist, composer, album, albumArtist;
-        public int year, trackNumber;
-        public String genre, albumArtUrl;
-        public Long estimatedSize, duration;
-        public String albumId, artistId, comment;
-        public int totalTrackCount, downloaded;
-
-        Chunk() {
-        }
-
-        Chunk(String id, String title, String artist, String composer, String album, String albumArtist, int year, int trackNumber,
-              String genre, String albumArtUrl, Long estimatedSize, Long duration, String albumId, String artistId, String comment, int totalTrackCount, int downloaded) {
-
-            this.id = id;
-            this.title = title;
-            this.artist = artist;
-            this.composer = composer;
-            this.album = album;
-            this.albumArtist = albumArtist;
-            this.year = year;
-            this.trackNumber = trackNumber;
-            this.genre = genre;
-            this.albumArtUrl = albumArtUrl;
-            this.estimatedSize = estimatedSize;
-            this.duration = duration;
-            this.albumId = albumId;
-            this.artistId = artistId;
-            this.comment = comment;
-            this.totalTrackCount = totalTrackCount;
-            this.downloaded = downloaded;
-
-        }
-
-    }
 
 }

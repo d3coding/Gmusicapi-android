@@ -87,6 +87,8 @@
     <string name="item_duration">duration</string>
     <string name="item_status">status</string>
 
+    <string name="database_version">database_version</string>
+
     <string name="null_description">Not implemented!</string>
 
 </resources>

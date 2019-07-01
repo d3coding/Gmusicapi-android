@@ -1,6 +1,7 @@
 package com.d3coding.gmusicapi.items;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -9,10 +10,10 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.d3coding.gmusicapi.GMusicDB;
 import com.d3coding.gmusicapi.GMusicFile;
 import com.d3coding.gmusicapi.R;
 
-import java.io.File;
 import java.util.List;
 
 public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder> {
@@ -50,8 +51,9 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
         holder.album.setText(musicItems.getAlbum());
         holder.artist.setText(musicItems.getArtist());
         holder.time.setText(musicItems.getDuration());
+        holder.albumArt.setImageBitmap(null);
 
-        if (musicItems.getDownloadStatus()) {
+        if (new GMusicDB(holder.title.getContext()).countDownloadsByUUID(musicItems.getUUID()) > 0) {
             holder.status.setText(R.string.radio_offline);
             holder.status.setTextColor(Color.rgb(0, 192, 0));
         } else {
@@ -59,27 +61,14 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
             holder.status.setTextColor(Color.rgb(192, 0, 0));
         }
 
-        if (new File(gmusicFile.getPathJPG(musicItems.getUUID())).exists())
-            holder.albumArt.setImageBitmap(gmusicFile.getBitmapThumbImage(musicItems.getUUID()));
-        else {
-            if (musicItems.getAlbumArtUrl().equals(""))
-                holder.albumArt.setImageBitmap(gmusicFile.getDefaultThumb());
-            else {
-                new Thread(() -> {
-
-                    if (gmusicFile.tryDownloadThumb(musicItems.getUUID(), musicItems.getAlbumArtUrl()) == 2)
-                        musicItems.removeURL();
-
-                    synchronized (this) {
-                        ((Activity) holder.title.getContext()).runOnUiThread(() -> notifyItemChanged(position));
-                    }
-
-                }).start();
+        new Thread(() -> {
+            Bitmap bitmap = gmusicFile.getThumbBitmap(musicItems.getUUID());
+            synchronized (this) {
+                ((Activity) holder.title.getContext()).runOnUiThread(() -> holder.albumArt.setImageBitmap(bitmap));
             }
-        }
+        }).start();
 
     }
-
 
     @Override
     public int getItemCount() {

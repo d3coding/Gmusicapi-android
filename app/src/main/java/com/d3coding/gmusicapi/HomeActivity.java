@@ -62,7 +62,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     private List<MusicItem> ConvertList = new ArrayList<>();
     private MusicAdapter mAdapter;
 
-    private GMusicDB.Sort sort = GMusicDB.Sort.title;
+    private GMusicDB.column sort = GMusicDB.column.title;
     private GMusicDB.SortOnline sortOnline = GMusicDB.SortOnline.all;
 
     private ExecutorService downloadQueue;
@@ -72,15 +72,13 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         super.onCreate(savedInstanceState);
         setContentView(R.layout.ac_blank);
 
-        // TODO: VerifyCorrectly
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
 
         SharedPreferences mPresets = getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE);
 
         if (mPresets.contains(getString(R.string.token))) {
 
             // TODO: validate token
-
             setContentView(R.layout.ac_home);
 
             Toolbar toolbar = findViewById(R.id.toolbar);
@@ -105,6 +103,8 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                 {
                     if (db == null)
                         db = new GMusicDB(this);
+
+                    // TODO: scanFilesAndUpdateDB
 
                     ConvertList.addAll(db.getMusicItems(sort, sortOnline, "", false));
                     mAdapter.notifyDataSetChanged();
@@ -155,7 +155,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                     ((TextView) vView.findViewById(R.id.opt_title)).setText(ConvertList.get(position).getTitle());
                     ((TextView) vView.findViewById(R.id.opt_artist)).setText(ConvertList.get(position).getArtist());
 
-                    if (ConvertList.get(position).getDownloadStatus()) {
+                    if (db.countDownloadsByUUID(ConvertList.get(position).getUUID()) > 0) {
                         linearComplete.setVisibility(View.VISIBLE);
                         linearDownloading.setVisibility(View.GONE);
                     } else {
@@ -175,6 +175,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                                     runOnUiThread(() -> {
                                         linearComplete.setVisibility(View.VISIBLE);
                                         linearDownloading.setVisibility(View.GONE);
+                                        mAdapter.notifyItemChanged(position);
                                     });
                                 }
                         });
@@ -210,6 +211,10 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
             if (!mPresets.contains(getString(R.string.last_update)))
                 refreshDB();
+            else if (mPresets.getInt(getString(R.string.database_version), 0) != GMusicDB.getDatabaseVersion()) {
+                refreshDB();
+                mPresets.edit().putInt(getString(R.string.database_version), GMusicDB.getDatabaseVersion()).apply();
+            }
 
         } else
             startActivityForResult(new Intent(this, LoginActivity.class), LOGIN_ACTIVITY);
@@ -261,15 +266,15 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                     int x = ((RadioGroup) vView.findViewById(R.id.radioGroup1)).getCheckedRadioButtonId();
                     int y = ((RadioGroup) vView.findViewById(R.id.radioGroup2)).getCheckedRadioButtonId();
 
-                    if (x == R.id.radio_title) {
-                        sort = GMusicDB.Sort.title;
-                    } else if (x == R.id.radio_artist) {
-                        sort = GMusicDB.Sort.artist;
-                    } else if (x == R.id.radio_album) {
-                        sort = GMusicDB.Sort.album;
-                    } else if (x == R.id.radio_genre) {
-                        sort = GMusicDB.Sort.genre;
-                    } else
+                    if (x == R.id.radio_title)
+                        sort = GMusicDB.column.title;
+                    else if (x == R.id.radio_artist)
+                        sort = GMusicDB.column.artist;
+                    else if (x == R.id.radio_album)
+                        sort = GMusicDB.column.album;
+                    else if (x == R.id.radio_genre)
+                        sort = GMusicDB.column.genre;
+                    else
                         sort = null;
 
                     if (y == R.id.radio_all) {

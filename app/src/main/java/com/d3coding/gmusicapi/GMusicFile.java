@@ -54,32 +54,34 @@ public class GMusicFile {
 
     int getQueue(String uuid) {
         if (!scan(uuid)) {
-            GMusicNet.Chunk chunk = db.selectByUID(uuid);
+            GMusicDB.TrackMetadata trackMetadata = db.selectByUUID(uuid);
+
             try {
                 AuthToken authToken = TokenProvider.provideToken(context.getSharedPreferences(context.getString(R.string.preferences_user)
                         , Context.MODE_PRIVATE).getString(context.getString(R.string.token), ""));
                 new GPlayMusic.Builder().setAuthToken(authToken).build().getTrackApi()
-                        .getTrack(chunk.id).download(StreamQuality.HIGH, Paths.get(getPathMP3(chunk.id)));
+                        .getTrack(trackMetadata.uuid).download(StreamQuality.HIGH, Paths.get(getPathMP3(trackMetadata.uuid)));
 
-                Mp3File mp3file = new Mp3File(getPathMP3(chunk.id));
+                Mp3File mp3file = new Mp3File(getPathMP3(trackMetadata.uuid));
                 ID3v2 id3v2 = new ID3v24Tag();
-                id3v2.setTitle(chunk.title);
-                id3v2.setArtist(chunk.artist);
-                id3v2.setComposer(chunk.composer);
-                id3v2.setAlbum(chunk.album);
-                id3v2.setAlbumArtist(chunk.albumArtist);
-                id3v2.setYear(String.valueOf(chunk.year));
-                id3v2.setGenreDescription(chunk.genre);
+                id3v2.setTitle(trackMetadata.title);
+                id3v2.setArtist(trackMetadata.artist);
+                id3v2.setComposer(trackMetadata.composer);
+                id3v2.setAlbum(trackMetadata.album);
+                id3v2.setAlbumArtist(trackMetadata.albumArtist);
+                id3v2.setYear(String.valueOf(trackMetadata.year));
+                id3v2.setGenreDescription(trackMetadata.genre);
 
+                // TODO: noImageBug
                 if (existsThumbImagePath(uuid))
-                    id3v2.setAlbumImage(Files.readAllBytes(Paths.get(getPathJPG(chunk.id))),
-                            Files.probeContentType(Paths.get(getPathJPG(chunk.id))));
+                    id3v2.setAlbumImage(Files.readAllBytes(Paths.get(getPathJPG(trackMetadata.uuid))),
+                            Files.probeContentType(Paths.get(getPathJPG(trackMetadata.uuid))));
 
                 mp3file.setId3v2Tag(id3v2);
-                mp3file.save(FILE_PATCH + chunk.id + ".mp3");
+                mp3file.save(FILE_PATCH + trackMetadata.uuid + ".mp3");
 
                 // Success
-                new GMusicDB(context).updateDB(chunk.id, 1);
+                new GMusicDB(context).insertUUIDbyDownloads(trackMetadata.uuid);
                 return 1;
 
             } catch (IOException e) {
@@ -89,8 +91,10 @@ public class GMusicFile {
                 e.printStackTrace();
                 return 0;
             }
-        } else
+        } else {
+            new GMusicDB(context).insertUUIDbyDownloads(uuid);
             return 1;
+        }
     }
 
     private boolean scan(String uuid) {
@@ -101,7 +105,7 @@ public class GMusicFile {
         File imgFile = new File(getPathJPG(uuid));
         if (imgFile.exists())
             return true;
-        else if (db.getThumbURL(uuid).equals("")) {
+        else if (db.selectColumnByUUID(uuid, GMusicDB.column.albumArtUrl).equals("")) {
             return false;
         } else {
             try {
@@ -114,7 +118,7 @@ public class GMusicFile {
     }
 
     private String downloadThumbImage(String uuid) throws MalformedURLException {
-        URL url = new URL(db.getThumbURL(uuid));
+        URL url = new URL(db.selectColumnByUUID(uuid, GMusicDB.column.albumArtUrl));
         try {
             File imgFile = new File(getPathJPG(uuid));
             if (!imgFile.exists())
@@ -133,30 +137,31 @@ public class GMusicFile {
         return null;
     }
 
-    public int tryDownloadThumb(String uuid, String albumArtUrl) {
-        File imgFile = new File(getPathJPG(uuid));
-        if (!albumArtUrl.equals("")) {
-            try {
-                URL url = new URL(albumArtUrl);
+    public Bitmap getThumbBitmap(String uuid) {
+        File thumbFile = new File(getPathJPG(uuid));
+        if (thumbFile.exists())
+            return BitmapFactory.decodeFile(thumbFile.getAbsolutePath());
+        else {
+            String albumArtUrl = db.selectColumnByUUID(uuid, GMusicDB.column.albumArtUrl);
+            if (!albumArtUrl.equals(""))
+                try {
+                    URL url = new URL(albumArtUrl);
 
-                if (!imgFile.exists())
-                    Files.copy(url.openStream(), Paths.get(imgFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
+                    if (!thumbFile.exists()) {
+                        Files.copy(url.openStream(), Paths.get(thumbFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
+                        return BitmapFactory.decodeFile(thumbFile.getAbsolutePath());
+                    }
 
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-                new GMusicDB(context).removeThumbLink(uuid);
-                return 2;
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-                new GMusicDB(context).removeThumbLink(uuid);
-                return 2;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return 0;
-            }
-            return 1;
-        } else
-            return 0;
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+        }
+        return getDefaultThumb();
     }
 
     public Bitmap getDefaultThumb() {
