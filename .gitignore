@@ -1,5 +1,7 @@
 *.iml
 .gradle
+keystore.jks
+/app/release/
 /local.properties
 /.idea/caches
 /.idea/dictionaries

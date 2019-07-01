@@ -3,34 +3,55 @@ sudo: required
 jdk: oraclejdk8
 env:
   global:
-    - ANDROID_API_LEVEL=28
-    - ANDROID_BUILD_TOOLS_VERSION=28.0.3
-    - ANDROID_ABI=armeabi-v7a
-
+  - ANDROID_API_LEVEL=28
+  - ANDROID_BUILD_TOOLS_VERSION=28.0.3
+  - ANDROID_ABI=armeabi-v7a
+  - secure: A/zYyWKQJoXRrfmGyBMz/OCx8HxetTHhwr1JCDBeMUjl6FrLlfaQDhqGFg9FIZjzokxyUNWhGfdAijLbnmjeXiptjYoo7rk6TJGPihBO/oFmP7+XTjUCxXDN/dF0FzhzAjcQ5ymFfWS4z/tMiK6PnP7i8srJTkn3F22cxD7uXAZft7kJfWRyZ7YXQFKHck6mGfLq6qoXvId2/32V1r2/+bXdQ0OmesjPb4d5+MgUkbQv5P7RMh44uutxiobUP+1JLJErGITEAmu/GPn+hfbqvMyJMae7f3YujzydCdw9m7ZhKpbx5ToBzCfcGyFlHTjwIYxSs/QGcl3fole3hL047uhvivwKjRP7R4bt827O20zf40JXZTLvcoRQSVJZJ3INqJbIh0Jj8eBlV9iTPphzdI9c9O/yt6m++C7DYBXQ+UsnyT8VJIvv0oLoh/VK7pbhBoLOiYWchkYoeWHhG83O921kU+U9NRSa8uEeOuKc4Pd04TrrXAmCs6ul/FOqf6WWRGh1VCFvF1raDZdfKJytmlt/8Qr1Ej3wr6t9hVjlcvmBZFT5nccraI7/gFIpRNJBjlxRU+8zoK9wYO68YXsUnxp/oHZdkqvUAlfQoX3vA/+bo8OXfGioitGTdgX26aGEndlSVQSPTMXNeSs+itXCGgSbvnve5ADEtKiI/0KRNAQ=
+  - secure: Xy20MUBqPe3JYnxc7oD2rL/hLHkFefbtR0k0yuwGyPcn1cUy89x0+KdcgzkuMsxi1Hy167CKyMeu1AIKyrSRt66EjU58VTj6h3iKScClMXRfIfhYcOZ1HYydgygb4WTGe6lF0mzejltH1/Ss9g6if7waCLfete6r4YtZWMeRFAHVHQH0KZXZaQBLT7WtGH6e+8vbjJs6tfRDBW1sldu+gv7t64B++vMgn9Lf2+JYQdCLlDF5ZX/cysIWrwnJonxHjVkqtkOgUfa+LvcMe2x+37NqUoU456RhAUtAtNyuNWBhrMzi+49z22ccWWRQX58uF8g+1rSZszkDmavIIXOVfaPcnF4XNyrSzFEr83T5+kYn/WVR3VrL/HRfNVCVIdEJpSZNkAWYM8xZhvjQsPdkaQw6cw/Nfg7vCRnn6h2ht9LHEtfFpSn38WaXzwNwra4+PDevNctjBdmXRhwXIWIwy7jtht8X/8hkTUeJDTB5094D2nbU6cnXpA0EVq7mHgSqsNyp6Hb5Ctc2g5jBtw7HiaRwsPIq0p+baX7ZaaN0v8Wy1uiI3/eaPeVaC1r3Q3xxxEwZ89ZLn0vp86NyW9ZwmXdDKof29CAyVnmSTWswM2TyTfp+Ho821vwHpcKx6NMf4q7yCyEWvT8BTVMRssY71RHNcQ1iWfx3bknpiWWRVcY=
 android:
   components:
-    - tools
-    - platform-tools
-    - tools
-    - extra-android-m2repository
+  - tools
+  - platform-tools
+  - tools
+  - extra-android-m2repository
   licenses:
-    - 'android-sdk-preview-license-52d11cd2'
-    - 'android-sdk-license-.+'
-    - 'google-gdk-license-.+'
+  - android-sdk-preview-license-52d11cd2
+  - android-sdk-license-.+
+  - google-gdk-license-.+
 before_install:
-    - touch $HOME/.android/repositories.cfg
-    - yes | sdkmanager "platforms;android-28"
-    - yes | sdkmanager "build-tools;28.0.3"
+- openssl aes-256-cbc -K $encrypted_5d278c7eb6ac_key -iv $encrypted_5d278c7eb6ac_iv
+  -in keystore.jks.enc -out keystore.jks -d
+- touch $HOME/.android/repositories.cfg
+- yes | sdkmanager "platforms;android-28"
+- yes | sdkmanager "build-tools;28.0.3"
 before_cache:
-    - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
-    - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+- rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+- rm -fr $HOME/.gradle/caches/*/plugin-resolution/
 cache:
   directories:
-    - "$HOME/.gradle/caches/"
-    - "$HOME/.gradle/wrapper/"
-    - "$HOME/.android/build-cache"
+  - "$HOME/.gradle/caches/"
+  - "$HOME/.gradle/wrapper/"
+  - "$HOME/.android/build-cache"
 before_script:
-    - chmod +x gradlew
+- chmod +x gradlew
 script:
-    - "./gradlew clean build"
-    - "./gradlew test"
+- "./gradlew clean build"
+- "./gradlew test"
+before_deploy:
+    - cp $TRAVIS_BUILD_DIR/keystore.jks $HOME
+    - cd app/build/outputs/apk/
+    - jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore $HOME/keystore.jks -storepass $storepass -keypass $keypass app-release-unsigned.apk key0
+    # Verification
+    - jarsigner -verify app-release-unsigned.apk
+    - "${ANDROID_HOME}/build-tools/28.0.3/zipalign -v 4 app-release-unsigned.apk gmusicapi.apk"
+
+deploy:
+  provider: releases
+  file: gmusicapi.apk
+  skip_cleanup: true
+  on:
+    repo: d3coding/Gmusicapi-android
+    tags: true
+    jdk: oraclejdk8
+  api_key:
+    secure: ToKBH2F6nxYBVKI7mneyhOKs3rW5eAowpdt3oeQ/Y5ieseYOs0bSBO1luWVLtd0AIYACAqLIa0T5yd9Lu7TK1j1AGwgrZTl5+/C9X+L8zBVO+z4mSUui9VOm+5o1amE6K8IYx3Gjr64M0g7XCDRdvM90iCDdubrqii7UWk6C/lyXYnqH4nUVYcwOnm7CJHjO0BeXM/EXmeQDKFfG4nz82hQ4ZR3nzIIzs2teQ9UUThoFn31Z3VbpVQ0TkUU11mkG3TtYb0iERBGaOGEQc5HB7A7JUQuuBtz/vkIcNT6D8oy680cSo/YzcFsjP+qs59WtgE1eVvgq2/suGKXG7cIyfj2nwOkmEjzcq0sSb12tbGrMz0Cu0hZ6zCdm4w96KH9F1iDXDYGtacxaZvonVUyW87+FuYPYNnK373bTbwaMmyNLwxcn2UpJqyLC/afDj8mAzuQN+kXj4CBhP815LsCp0BpCfpWfe7Q4Ygw52/x0g5SWeOK7E4O0hzrEV3tg3m+Fl/FUosx/P+NQIItFX/dqgVFFICqXSS+52Mu9+MJXO7IBw2Z2HzZy+90PhmuGckmpxWHM+cW07hjIRJSrGLO0zsBBvQEig4RNZVFkiAdIUyrpGLuSiyYfrd7jZqqD4/F33SZXOTgbeqBNMcvAxwn2hXYh/4SIpetQFyIlpmjKgn4=
