@@ -46,6 +46,7 @@ before_deploy:
 - "${ANDROID_HOME}/build-tools/28.0.3/zipalign -v 4 app-release-unsigned.apk gmusicapi.apk"
 deploy:
   provider: releases
+  prerelease: true
   api_key:
     secure: CJdxVJoc7ft3nZunOR6kkrU2rUgTQU5VDy8VbsxQGGClAn2T0mw0QKiNTopY08+eylpMXat4ok5vHbojWBxWw38k8A9SWA2DM5dUcS9XqxtcnUPmRtciwgjoDJHCv739ETcd2eHK24ZrX7PqyLLJ6u7pbT/o9TyD+m2eB0uh4fr1yypt8/uloYufDFbTEgd3XSyTVU7xiwTfnUra2kF/HwhFSCxfHO8mnMcdStQ5iNvumsZM5xHebkgjLtC51XjQzQVza+Xg+55gZCMW3zsEwhAVekN3eZoQqPtVn/9hLee3/6JxoqECoHVHmFQesr0cdstL+4x7Qt50/kjlmY13wrJ3NaojUmuKZgJhP1as+RDFPmkXGj1OYFEl2A4T9GbPxZ7fbmu1ZqKNPdZDYhaozIgG5K6F0isGrWpgO3SwExITJ2h731jh8xhiXY003VEdC4jmI4vCn+NYwhbYVYVLFb5gg7XQa47GLMQqwu96t3iReIhZzT8IXUN57oKfI6Ht59FHsD9f27ufk2pzbmoT9z/SLQFY7UzF9tyov/FAk1H9BGxj8uokQEHS9DwNTYSwBHp/OlZ6FUJLfND3JhhPnavqUspj5ucn4zkD/wHWZy3cRXqpG1x5nxrC1x2+3JMuRDveNsIvq8LyAPhYB7lFRakLDhK4C7UZeDtDlFX7pdQ=
   file: gmusicapi.apk
@@ -53,4 +54,3 @@ deploy:
   on:
     repo: d3coding/Gmusicapi-android
     tags: true
-    jdk: oraclejdk8
