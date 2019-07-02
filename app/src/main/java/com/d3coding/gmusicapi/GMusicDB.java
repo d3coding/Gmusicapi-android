@@ -129,22 +129,22 @@ public class GMusicDB extends SQLiteOpenHelper {
 
     String selectColumnByUUID(String uuid, column columnName) {
         String ret = "";
-
-        SQLiteDatabase db = this.getReadableDatabase();
-
         String[] columns = {columnName.name()};
         String selection = column.uuid.name() + " = \"" + uuid + "\"";
 
-        Cursor cursor = db.query(TABLE_TRACKS, columns, selection, null, null, null, null);
+        synchronized (this) {
+            SQLiteDatabase db = this.getReadableDatabase();
+            Cursor cursor = db.query(TABLE_TRACKS, columns, selection, null, null, null, null);
 
-        if (cursor != null && cursor.moveToFirst())
-            ret = cursor.getString(0);
+            if (cursor != null && cursor.moveToFirst())
+                ret = cursor.getString(0);
 
-        try {
-            db.close();
-            cursor.close();
-        } catch (NullPointerException e) {
-            e.printStackTrace();
+            try {
+                cursor.close();
+                db.close();
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            }
         }
 
         return ret;

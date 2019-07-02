@@ -109,7 +109,7 @@ public class GMusicFile {
             return false;
         } else {
             try {
-                return (downloadThumbImage(uuid).equals(""));
+                return (!downloadThumbImage(uuid).equals(""));
             } catch (MalformedURLException e) {
                 e.printStackTrace();
                 return false;
