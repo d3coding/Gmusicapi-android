@@ -154,13 +154,14 @@ public class GMusicDB extends SQLiteOpenHelper {
         List<MusicItem> ret = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
-        String[] columns = {column.uuid.name(), column.albumArtUrl.name(), column.title.name(), column.artist.name(),
+        String[] columns = {column.uuid.name(), column.title.name(), column.artist.name(),
                 column.album.name(), column.durationMillis.name()};
 
         StringBuilder selection = new StringBuilder();
 
         if (!filterTitle.equals(""))
             selection.append(column.title.name()).append(" LIKE \'%").append(filterTitle).append("%\'");
+
 
         if (sortOnline == SortOnline.offline) {
             if (!filterTitle.equals(""))
@@ -171,7 +172,6 @@ public class GMusicDB extends SQLiteOpenHelper {
                 selection.append(" AND ");
             selection.append(column.uuid.name()).append(" NOT IN (SELECT ").append(downloadsColumn.uuid.name()).append(" FROM ").append(TABLE_DOWNLOAD).append(")");
         }
-        // TODO: filterDownloads
 
         String orderBy = null;
         if (order != null) {
@@ -187,7 +187,7 @@ public class GMusicDB extends SQLiteOpenHelper {
         if (cursor != null && cursor.moveToFirst()) {
             do {
                 ret.add(new MusicItem(cursor.getString(0), cursor.getString(1), cursor.getString(2),
-                        cursor.getString(3), cursor.getString(4), cursor.getString(5)));
+                        cursor.getString(3), cursor.getString(4)));
             } while (cursor.moveToNext());
         }
 

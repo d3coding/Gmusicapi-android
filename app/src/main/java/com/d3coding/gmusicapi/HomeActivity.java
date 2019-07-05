@@ -23,7 +23,6 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -46,6 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class HomeActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -65,7 +65,8 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     private GMusicDB.column sort = GMusicDB.column.title;
     private GMusicDB.SortOnline sortOnline = GMusicDB.SortOnline.all;
 
-    private ExecutorService downloadQueue;
+    private ExecutorService downloadQueueService;
+    private Download downloadQueue;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -140,8 +141,9 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                 });
 
                 mAdapter.setOnItemLongClickListener((view, position) -> {
+                    MusicItem musicItem = ConvertList.get(position);
 
-                    Bitmap bitmap = gmusicFile.getBitmapThumbImage(ConvertList.get(position).getUUID());
+                    Bitmap bitmap = gmusicFile.getBitmapThumbImage(musicItem.getUUID());
                     if (bitmap == null)
                         bitmap = gmusicFile.getDefaultThumb();
 
@@ -152,10 +154,10 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                             linearDownloading = vView.findViewById(R.id.status_downloading);
 
                     ((ImageView) vView.findViewById(R.id.opt_album_art)).setImageBitmap(bitmap);
-                    ((TextView) vView.findViewById(R.id.opt_title)).setText(ConvertList.get(position).getTitle());
-                    ((TextView) vView.findViewById(R.id.opt_artist)).setText(ConvertList.get(position).getArtist());
+                    ((TextView) vView.findViewById(R.id.opt_title)).setText(musicItem.getTitle());
+                    ((TextView) vView.findViewById(R.id.opt_artist)).setText(musicItem.getArtist());
 
-                    if (db.countDownloadsByUUID(ConvertList.get(position).getUUID()) > 0) {
+                    if (db.countDownloadsByUUID(musicItem.getUUID()) > 0) {
                         linearComplete.setVisibility(View.VISIBLE);
                         linearDownloading.setVisibility(View.GONE);
                     } else {
@@ -163,27 +165,34 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                         linearComplete.setVisibility(View.GONE);
                         linearDownloading.setVisibility(View.VISIBLE);
 
+                        if (downloadQueueService == null)
+                            downloadQueueService = Executors.newFixedThreadPool(DOWNLOADS_NUM);
                         if (downloadQueue == null)
-                            downloadQueue = Executors.newFixedThreadPool(DOWNLOADS_NUM);
+                            downloadQueue = new Download();
 
-                        // DownloadQueue
-                        downloadQueue.submit(() -> {
-                            // TODO: getDownloadStatus
-                            Log.d("exec", "input download");
-                            if (gmusicFile.getQueue(ConvertList.get(position).getUUID()) != 0)
-                                synchronized (this) {
-                                    runOnUiThread(() -> {
-                                        linearComplete.setVisibility(View.VISIBLE);
-                                        linearDownloading.setVisibility(View.GONE);
-                                        mAdapter.notifyItemChanged(position);
-                                    });
-                                }
-                        });
+                        if (!downloadQueue.hasUUID(musicItem.getUUID())) {
+                            downloadQueue.addQueueService(musicItem.getUUID(),
+                                    downloadQueueService.submit(() -> {
+                                        // TODO: getDownloadStatus
+                                        if (gmusicFile.getQueue(musicItem.getUUID()) != 0)
+                                            synchronized (this) {
+                                                runOnUiThread(() -> {
+                                                    linearComplete.setVisibility(View.VISIBLE);
+                                                    linearDownloading.setVisibility(View.GONE);
+                                                    mAdapter.notifyItemChanged(position);
+                                                    downloadQueue.setComplete(musicItem.getUUID());
+                                                });
+                                            }
+                                    })
+                            );
+                        } else {
+                            // TODO: getStatus
+                        }
                     }
 
                     vView.findViewById(R.id.opt_bt_play).setOnClickListener((view2) -> {
                         Uri uri = FileProvider.getUriForFile(this, this.getPackageName() + ".fileprovider",
-                                new File(new File(Environment.getExternalStorageDirectory(), "Gmusicapi"), ConvertList.get(position).getUUID() + ".mp3"));
+                                new File(new File(Environment.getExternalStorageDirectory(), "Gmusicapi"), musicItem.getUUID() + ".mp3"));
 
                         Intent intent = new Intent(Intent.ACTION_VIEW);
                         intent.setDataAndType(uri, getContentResolver().getType(uri))
@@ -219,6 +228,46 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         } else
             startActivityForResult(new Intent(this, LoginActivity.class), LOGIN_ACTIVITY);
 
+    }
+
+    class Download {
+        private List<String> UUID;
+        private List<Future> future;
+
+        Download() {
+            this.UUID = new ArrayList<>();
+            this.future = new ArrayList<>();
+        }
+
+        int addQueueService(String UUID, Future future) {
+            this.UUID.add(UUID);
+            this.future.add(future);
+            return this.UUID.size() - 1;
+        }
+
+        boolean hasUUID(String UUID) {
+            for (String uuid : this.UUID)
+                if (UUID.equals(uuid))
+                    return true;
+            return false;
+        }
+
+        void setComplete(String UUID) {
+            for (int x = 0; x < this.UUID.size(); ++x)
+                if (this.UUID.equals(UUID)) {
+                    this.UUID.remove(x);
+                    this.future.remove(x);
+                    break;
+                }
+        }
+
+        public String getUUID(int position) {
+            return UUID.get(position);
+        }
+
+        public Future getFuture(int position) {
+            return future.get(position);
+        }
     }
 
     @Override
