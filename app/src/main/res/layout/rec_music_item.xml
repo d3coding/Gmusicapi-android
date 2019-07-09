@@ -1,29 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/constraintLayout5"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_marginStart="8dp"
-    android:layout_marginTop="4dp"
-    android:layout_marginEnd="8dp"
-    android:layout_marginBottom="4dp"
-    android:background="@drawable/card"
     android:baselineAligned="false"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?android:attr/selectableItemBackground"
     android:gravity="center_horizontal"
-    android:orientation="horizontal"
-    android:paddingStart="@dimen/item_padding"
-    android:paddingTop="@dimen/item_padding"
-    android:paddingEnd="@dimen/item_padding"
-    android:paddingBottom="@dimen/item_padding">
+    android:orientation="horizontal">
 
     <android.support.v7.widget.CardView
+        android:id="@+id/cardView"
         android:layout_width="70dp"
         android:layout_height="70dp"
-        android:layout_marginEnd="@dimen/item_padding"
-        app:cardCornerRadius="4dp">
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        app:cardCornerRadius="4dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
             android:id="@+id/thumb"
@@ -33,27 +31,53 @@
 
     </android.support.v7.widget.CardView>
 
-    <RelativeLayout
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/cON"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1">
+        android:layout_height="0dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_weight="1"
+        app:layout_constraintBottom_toBottomOf="@+id/cardView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/cardView"
+        app:layout_constraintTop_toTopOf="@+id/cardView">
 
-        <TextView
-            android:id="@+id/title"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:id="@+id/fff"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="@string/item_title"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            app:layout_constraintBottom_toTopOf="@+id/artist_album"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/item_title"
+                android:textColor="@color/recycleTextColor"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/artist_album"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_below="@id/title">
+            android:layout_alignParentStart="true"
+            android:layout_alignParentEnd="true"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
             <TextView
                 android:id="@+id/artist"
@@ -62,7 +86,8 @@
                 android:layout_marginEnd="5dp"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="@string/item_artist" />
+                android:text="@string/item_artist"
+                android:textColor="@color/recycleTextColor" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -70,7 +95,8 @@
                 android:layout_marginEnd="5dp"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="@string/item_separator" />
+                android:text="@string/item_separator"
+                android:textColor="@color/recycleTextColor" />
 
             <TextView
                 android:id="@+id/album"
@@ -78,23 +104,32 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="@string/item_album" />
+                android:text="@string/item_album"
+                android:textColor="@color/recycleTextColor" />
 
         </LinearLayout>
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:id="@+id/linearLayout"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_below="@id/artist_album">
+            android:layout_below="@id/artist_album"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentEnd="true"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/artist_album">
 
             <TextView
                 android:id="@+id/time"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_marginEnd="5dp"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="@string/item_duration" />
+                android:text="@string/item_duration"
+                android:textColor="@color/recycleTextColor" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -102,7 +137,8 @@
                 android:layout_marginEnd="5dp"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="@string/item_separator" />
+                android:text="@string/item_separator"
+                android:textColor="@color/recycleTextColor" />
 
             <TextView
                 android:id="@+id/status"
@@ -110,10 +146,11 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="@string/item_status" />
+                android:text="@string/item_status"
+                android:textColor="@color/recycleTextColor" />
 
         </LinearLayout>
 
-    </RelativeLayout>
+    </android.support.constraint.ConstraintLayout>
 
-</LinearLayout>
+</android.support.constraint.ConstraintLayout>

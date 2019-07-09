@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.GravityCompat;
@@ -28,6 +29,8 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     private DrawerLayout drawer;
     private NavigationView navigationView;
 
+    private FloatingActionButton fab;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,6 +51,10 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             navigationView = findViewById(R.id.nav_view);
 
             setSupportActionBar(toolbar);
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+
+            fab = findViewById(R.id.search_button);
+            fab.setOnClickListener((v) -> Toast.makeText(this, getString(R.string.null_description), Toast.LENGTH_SHORT).show());
 
             ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
             drawer.addDrawerListener(toggle);
@@ -80,7 +87,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.manu_main, menu);
+        inflater.inflate(R.menu.menu_main, menu);
         menu.findItem(R.id.act_icon_refresh_log).setVisible(mState);
 
         return true;
@@ -97,15 +104,12 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             mState = false;
             supportInvalidateOptionsMenu();
             return true;
-        } else if (id == R.id.act_icon_search) {
-            Toast.makeText(this, getString(R.string.null_description), Toast.LENGTH_SHORT).show();
-            return true;
         } else if (id == R.id.act_icon_filter) {
             ((HomeFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_content)).showFilter();
             return true;
         } else if (id == R.id.action_clean_db) {
             deleteDatabase(GMusicDB.DATABASE_NAME);
-            recreate();
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_content, new HomeFragment()).commit();
             return true;
         } else if (id == R.id.action_refresh_db) {
             mState = true;
@@ -113,12 +117,12 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             refreshDB();
             return true;
         } else if (id == R.id.action_recreate) {
-            recreate();
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_content, new HomeFragment()).commit();
         } else if (id == R.id.action_logout) {
             this.getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE).edit().remove(getString(R.string.token))
                     .remove(getString(R.string.last_update)).apply();
             deleteDatabase(GMusicDB.DATABASE_NAME);
-            recreate();
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_content, new HomeFragment()).commit();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -131,7 +135,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             if (resultCode == RESULT_OK) {
                 (getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE).edit())
                         .putString(getString(R.string.token), data.getStringExtra(getString(R.string.token))).apply();
-                recreate();
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_content, new HomeFragment()).commit();
             } else if (resultCode == RESULT_CANCELED)
                 finish();
 
@@ -151,11 +155,9 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         int id = menuItem.getItemId();
 
         if (id == R.id.nav_all) {
-            // TODO: HomeActivity
-            recreate();
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_content, new HomeFragment()).commit();
         } else if (id == R.id.nav_playlist) {
-            // TODO: PlaylistActivity
-            Toast.makeText(this, getString(R.string.null_description), Toast.LENGTH_SHORT).show();
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_content, new PlaylistFragment()).commit();
         } else if (id == R.id.nav_settings) {
             // TODO: SettingsActivity
             Toast.makeText(this, getString(R.string.null_description), Toast.LENGTH_SHORT).show();

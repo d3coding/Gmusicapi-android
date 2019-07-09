@@ -11,13 +11,6 @@
         android:visible="false" />
 
     <item
-        android:id="@+id/act_icon_search"
-        android:icon="@drawable/ic_search"
-        android:orderInCategory="12"
-        android:title="@string/act_icon_search"
-        app:showAsAction="ifRoom" />
-
-    <item
         android:id="@+id/act_icon_filter"
         android:icon="@drawable/ic_filter"
         android:orderInCategory="13"
