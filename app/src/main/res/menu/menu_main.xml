@@ -15,7 +15,7 @@
         android:icon="@drawable/ic_search"
         android:orderInCategory="12"
         android:title="@string/act_icon_search"
-        app:actionViewClass="android.support.v7.widget.SearchView"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"
         app:showAsAction="ifRoom" />
 
     <item
