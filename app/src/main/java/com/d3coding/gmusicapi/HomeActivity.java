@@ -15,11 +15,11 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
+import com.google.android.material.bottomappbar.BottomAppBar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 
@@ -32,7 +32,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     private DrawerLayout drawer;
     private NavigationView navigationView;
 
-    Toolbar toolbar;
+    private BottomAppBar toolbar;
     private FloatingActionButton fab;
 
     SearchView searchView;
@@ -57,7 +57,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             navigationView = findViewById(R.id.nav_view);
 
             setSupportActionBar(toolbar);
-            getSupportActionBar().setDisplayShowTitleEnabled(false);
 
             fab = findViewById(R.id.filter_button);
             fab.setOnClickListener((v) -> ((HomeFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_content)).showFilter());
@@ -99,7 +98,23 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         getMenuInflater().inflate(R.menu.menu_main, menu);
         menu.findItem(R.id.act_icon_refresh_log).setVisible(mState);
 
-        searchView = (SearchView) menu.findItem(R.id.act_icon_search).getActionView();
+        MenuItem menuItem = menu.findItem(R.id.act_icon_search);
+
+        menuItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
+            @Override
+            public boolean onMenuItemActionExpand(MenuItem item) {
+                fab.hide();
+                return true;
+            }
+
+            @Override
+            public boolean onMenuItemActionCollapse(MenuItem item) {
+                fab.show();
+                return true;
+            }
+        });
+
+        searchView = (SearchView) menuItem.getActionView();
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -114,19 +129,10 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             }
         });
 
-        searchView.setOnQueryTextFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus)
-                fab.hide();
-        });
-
-        searchView.setOnCloseListener(() -> {
-            fab.show();
-            return false;
-        });
+        searchView.findViewById(androidx.appcompat.R.id.search_plate).setBackgroundColor(Color.TRANSPARENT);
 
         EditText searchEditText = searchView.findViewById(androidx.appcompat.R.id.search_src_text);
         searchEditText.setHintTextColor(Color.GRAY);
-
 
         return true;
     }

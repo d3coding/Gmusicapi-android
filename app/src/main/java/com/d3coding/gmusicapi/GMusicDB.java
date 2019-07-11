@@ -150,7 +150,7 @@ public class GMusicDB extends SQLiteOpenHelper {
         return ret;
     }
 
-    List<MusicItem> getMusicItems(column order, SortOnline sortOnline, String filterTitle, boolean desc) {
+    List<MusicItem> getMusicItems(int order, int sortOnline, String filterTitle, boolean desc) {
         List<MusicItem> ret = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -162,25 +162,30 @@ public class GMusicDB extends SQLiteOpenHelper {
         if (!filterTitle.equals(""))
             selection.append(column.title.name()).append(" LIKE \'%").append(filterTitle).append("%\'");
 
-
-        if (sortOnline == SortOnline.offline) {
+        if (sortOnline == 2) {
             if (!filterTitle.equals(""))
                 selection.append(" AND ");
             selection.append(column.uuid.name()).append(" IN (SELECT ").append(downloadsColumn.uuid.name()).append(" FROM ").append(TABLE_DOWNLOAD).append(")");
-        } else if (sortOnline == SortOnline.online) {
+        } else if (sortOnline == 1) {
             if (!filterTitle.equals(""))
                 selection.append(" AND ");
             selection.append(column.uuid.name()).append(" NOT IN (SELECT ").append(downloadsColumn.uuid.name()).append(" FROM ").append(TABLE_DOWNLOAD).append(")");
         }
 
         String orderBy = null;
-        if (order != null) {
-            orderBy = order.name();
-            if (desc)
-                orderBy += " DESC";
-            else
-                orderBy += " ASC";
-        }
+        if (order == 1)
+            orderBy = column.artist.name();
+        else if (order == 2)
+            orderBy = column.artist.name();
+        else if (order == 3)
+            orderBy = column.artist.name();
+        else
+            orderBy = column.artist.name();
+
+        if (desc)
+            orderBy += " DESC";
+        else
+            orderBy += " ASC";
 
         Cursor cursor = db.query(TABLE_TRACKS, columns, selection.toString(), null, null, null, orderBy);
 

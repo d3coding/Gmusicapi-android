@@ -92,5 +92,20 @@
     <string name="database_version">database_version</string>
 
     <string name="null_description">Not implemented!</string>
+    <string name="filter_by">Filter By:</string>
+    <string name="organize_by">Organize by:</string>
+
+    <string-array name="organize_by">
+        <item>Title</item>
+        <item>Artist</item>
+        <item>Album</item>
+        <item>Genre</item>
+    </string-array>
+
+    <string-array name="filter_by">
+        <item>All</item>
+        <item>Online</item>
+        <item>Offline</item>
+    </string-array>
 
 </resources>

@@ -13,9 +13,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RadioGroup;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,8 +46,9 @@ public class HomeFragment extends Fragment {
 
     private GMusicDB db;
 
-    private GMusicDB.column sort = GMusicDB.column.title;
-    private GMusicDB.SortOnline sortOnline = GMusicDB.SortOnline.all;
+    private int sort = 0;
+    private int sortOnline = 0;
+
     private String filterText = "";
     private boolean desc;
 
@@ -189,36 +191,21 @@ public class HomeFragment extends Fragment {
 
     void showFilter() {
         {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
             ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.ad_filter, null);
-
-            builder.setPositiveButton(R.string.act_icon_filter, (dialog, which) -> {
-
-                int x = ((RadioGroup) vView.findViewById(R.id.radioGroup1)).getCheckedRadioButtonId();
-                int y = ((RadioGroup) vView.findViewById(R.id.radioGroup2)).getCheckedRadioButtonId();
-
-                if (x == R.id.radio_title)
-                    sort = GMusicDB.column.title;
-                else if (x == R.id.radio_artist)
-                    sort = GMusicDB.column.artist;
-                else if (x == R.id.radio_album)
-                    sort = GMusicDB.column.album;
-                else if (x == R.id.radio_genre)
-                    sort = GMusicDB.column.genre;
-                else
-                    sort = null;
-
-                if (y == R.id.radio_all)
-                    sortOnline = GMusicDB.SortOnline.all;
-                else if (y == R.id.radio_online)
-                    sortOnline = GMusicDB.SortOnline.online;
-                else if (y == R.id.radio_offline)
-                    sortOnline = GMusicDB.SortOnline.offline;
-                else
-                    sortOnline = null;
-
+            Spinner spinner_organize = vView.findViewById(R.id.filter_organize);
+            Spinner spinner_filter = vView.findViewById(R.id.filter_filter);
+            ArrayAdapter<CharSequence> adapter_organize = ArrayAdapter.createFromResource(getContext(), R.array.organize_by, android.R.layout.simple_spinner_item);
+            ArrayAdapter<CharSequence> adapter_filter = ArrayAdapter.createFromResource(getContext(), R.array.filter_by, android.R.layout.simple_spinner_item);
+            adapter_organize.setDropDownViewResource(R.layout.spinner_simple_text_box);
+            adapter_filter.setDropDownViewResource(R.layout.spinner_simple_text_box);
+            spinner_organize.setAdapter(adapter_organize);
+            spinner_filter.setAdapter(adapter_filter);
+            spinner_organize.setSelection(sort);
+            spinner_filter.setSelection(sortOnline);
+            new AlertDialog.Builder(getContext(), R.style.AppTheme_AlertDialog).setPositiveButton(R.string.act_icon_filter, (dialog, which) -> {
+                sort = spinner_organize.getSelectedItemPosition();
+                sortOnline = spinner_filter.getSelectedItemPosition();
                 updateList();
-
             }).setView(vView).create().show();
 
         }

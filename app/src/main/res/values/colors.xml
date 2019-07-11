@@ -4,6 +4,6 @@
     <color name="colorPrimary">#FFF</color>
     <color name="colorPrimaryDark">#FFF</color>
     <color name="colorAccent">#B39DDB</color>
-    <color name="recycleTextColor">#aa000000</color>
+    <color name="recycleTextColor">#a000</color>
 
 </resources>
