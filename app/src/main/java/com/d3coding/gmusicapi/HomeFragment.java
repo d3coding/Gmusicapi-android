@@ -22,7 +22,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioGroup;
@@ -47,6 +46,9 @@ public class HomeFragment extends Fragment {
 
     private GMusicDB.column sort = GMusicDB.column.title;
     private GMusicDB.SortOnline sortOnline = GMusicDB.SortOnline.all;
+    private String filterText = "";
+    private boolean desc;
+
 
     private List<MusicItem> ConvertList = new ArrayList<>();
     private MusicAdapter mAdapter;
@@ -79,10 +81,8 @@ public class HomeFragment extends Fragment {
         recyclerView.setAdapter(mAdapter);
 
         // TODO: scanFilesAndUpdateDB
-        db = new GMusicDB(getContext());
 
-        ConvertList.addAll(db.getMusicItems(sort, sortOnline, "", false));
-        mAdapter.notifyDataSetChanged();
+        updateList();
 
         mAdapter.setOnItemClickListener((view, position) -> {
 
@@ -193,9 +193,6 @@ public class HomeFragment extends Fragment {
 
             builder.setPositiveButton(R.string.act_icon_filter, (dialog, which) -> {
 
-                if (db == null)
-                    db = new GMusicDB(getContext());
-
                 int x = ((RadioGroup) vView.findViewById(R.id.radioGroup1)).getCheckedRadioButtonId();
                 int y = ((RadioGroup) vView.findViewById(R.id.radioGroup2)).getCheckedRadioButtonId();
 
@@ -210,24 +207,35 @@ public class HomeFragment extends Fragment {
                 else
                     sort = null;
 
-                if (y == R.id.radio_all) {
+                if (y == R.id.radio_all)
                     sortOnline = GMusicDB.SortOnline.all;
-                } else if (y == R.id.radio_online) {
+                else if (y == R.id.radio_online)
                     sortOnline = GMusicDB.SortOnline.online;
-                } else if (y == R.id.radio_offline) {
+                else if (y == R.id.radio_offline)
                     sortOnline = GMusicDB.SortOnline.offline;
-                } else
+                else
                     sortOnline = null;
 
-                ConvertList.clear();
-                ConvertList.addAll(db.getMusicItems(sort, sortOnline, ((EditText) vView.findViewById(R.id.filter_text)).getText().toString(), false));
-
-                mAdapter.notifyDataSetChanged();
+                updateList();
 
             }).setView(vView).create().show();
 
         }
 
+    }
+
+    void filter(String filterText) {
+        this.filterText = filterText;
+        updateList();
+    }
+
+    void updateList() {
+        if (db == null)
+            db = new GMusicDB(getContext());
+
+        ConvertList.clear();
+        ConvertList.addAll(db.getMusicItems(sort, sortOnline, filterText, desc));
+        mAdapter.notifyDataSetChanged();
     }
 
     class Download {

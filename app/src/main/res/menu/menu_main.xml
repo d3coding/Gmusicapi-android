@@ -11,10 +11,11 @@
         android:visible="false" />
 
     <item
-        android:id="@+id/act_icon_filter"
-        android:icon="@drawable/ic_filter"
-        android:orderInCategory="13"
-        android:title="@string/act_icon_filter"
+        android:id="@+id/act_icon_search"
+        android:icon="@drawable/ic_search"
+        android:orderInCategory="12"
+        android:title="@string/act_icon_search"
+        app:actionViewClass="android.support.v7.widget.SearchView"
         app:showAsAction="ifRoom" />
 
     <item

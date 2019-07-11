@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -13,15 +14,15 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.EditText;
 import android.widget.Toast;
 
 
 public class HomeActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
-
 
     static final int LOGIN_ACTIVITY = 11;
 
@@ -29,7 +30,10 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     private DrawerLayout drawer;
     private NavigationView navigationView;
 
+    Toolbar toolbar;
     private FloatingActionButton fab;
+
+    SearchView searchView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +49,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             // TODO: validate token
             setContentView(R.layout.ac_home);
 
-            Toolbar toolbar = findViewById(R.id.toolbar);
+            toolbar = findViewById(R.id.toolbar);
 
             drawer = findViewById(R.id.drawer_layout);
             navigationView = findViewById(R.id.nav_view);
@@ -53,8 +57,8 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             setSupportActionBar(toolbar);
             getSupportActionBar().setDisplayShowTitleEnabled(false);
 
-            fab = findViewById(R.id.search_button);
-            fab.setOnClickListener((v) -> Toast.makeText(this, getString(R.string.null_description), Toast.LENGTH_SHORT).show());
+            fab = findViewById(R.id.filter_button);
+            fab.setOnClickListener((v) -> ((HomeFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_content)).showFilter());
 
             ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
             drawer.addDrawerListener(toggle);
@@ -79,16 +83,48 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     public void onBackPressed() {
         if (drawer.isDrawerOpen(GravityCompat.START))
             drawer.closeDrawer(GravityCompat.START);
-        else
-            super.onBackPressed();
+        else {
+            if (searchView != null) {
+                searchView.setIconified(true);
+            } else
+                super.onBackPressed();
+        }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu_main, menu);
+        getMenuInflater().inflate(R.menu.menu_main, menu);
         menu.findItem(R.id.act_icon_refresh_log).setVisible(mState);
+
+        searchView = (SearchView) menu.findItem(R.id.act_icon_search).getActionView();
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                ((HomeFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_content)).filter(query);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                ((HomeFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_content)).filter(newText);
+                return false;
+            }
+        });
+
+        searchView.setOnQueryTextFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus)
+                fab.hide();
+        });
+
+        searchView.setOnCloseListener(() -> {
+            fab.show();
+            return false;
+        });
+
+        EditText searchEditText = searchView.findViewById(android.support.v7.appcompat.R.id.search_src_text);
+        searchEditText.setHintTextColor(Color.GRAY);
+
 
         return true;
     }
@@ -103,9 +139,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         if (id == R.id.act_icon_refresh_log) {
             mState = false;
             supportInvalidateOptionsMenu();
-            return true;
-        } else if (id == R.id.act_icon_filter) {
-            ((HomeFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_content)).showFilter();
             return true;
         } else if (id == R.id.action_clean_db) {
             deleteDatabase(GMusicDB.DATABASE_NAME);

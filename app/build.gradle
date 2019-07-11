@@ -6,8 +6,8 @@ android {
         applicationId "com.d3coding.gmusicapi"
         minSdkVersion 28
         targetSdkVersion 28
-        versionCode 1
-        versionName "0.1"
+        versionCode 20
+        versionName "0.2"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
