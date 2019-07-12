@@ -159,8 +159,16 @@ public class GMusicDB extends SQLiteOpenHelper {
 
         StringBuilder selection = new StringBuilder();
 
-        if (!filterTitle.equals(""))
-            selection.append(column.title.name()).append(" LIKE \'%").append(filterTitle).append("%\'");
+        if (!filterTitle.equals("")) {
+            if (filterTitle.startsWith("AR:"))
+                selection.append(column.artist.name()).append(" LIKE \'%").append(filterTitle.replace("AR:", "")).append("%\'");
+            else if (filterTitle.startsWith("AL:"))
+                selection.append(column.album.name()).append(" LIKE \'%").append(filterTitle.replace("AL:", "")).append("%\'");
+            else if (filterTitle.startsWith("GE:"))
+                selection.append(column.genre.name()).append(" LIKE \'%").append(filterTitle.replace("GE:", "")).append("%\'");
+            else
+                selection.append(column.title.name()).append(" LIKE \'%").append(filterTitle).append("%\'");
+        }
 
         if (sortOnline == 2) {
             if (!filterTitle.equals(""))
