@@ -45,6 +45,8 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
             app:fabAlignmentMode="center"
+            app:fabCradleVerticalOffset="10dp"
+            app:hideOnScroll="true"
             app:popupTheme="@style/AppTheme.PopupOverlay" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
