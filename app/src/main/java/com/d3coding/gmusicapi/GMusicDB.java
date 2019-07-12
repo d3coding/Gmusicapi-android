@@ -176,11 +176,11 @@ public class GMusicDB extends SQLiteOpenHelper {
         if (order == 1)
             orderBy = column.artist.name();
         else if (order == 2)
-            orderBy = column.artist.name();
+            orderBy = column.album.name();
         else if (order == 3)
-            orderBy = column.artist.name();
+            orderBy = column.genre.name();
         else
-            orderBy = column.artist.name();
+            orderBy = column.title.name();
 
         if (desc)
             orderBy += " DESC";
@@ -207,7 +207,7 @@ public class GMusicDB extends SQLiteOpenHelper {
         return ret;
     }
 
-    void insertUUIDbyDownloads(String uuid) {
+    public void insertUUIDbyDownloads(String uuid) {
         ContentValues contentValues = new ContentValues();
 
         contentValues.put(downloadsColumn.uuid.name(), uuid);

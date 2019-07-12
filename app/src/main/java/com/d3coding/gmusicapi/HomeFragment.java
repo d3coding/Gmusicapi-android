@@ -8,6 +8,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,6 +33,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.d3coding.gmusicapi.items.MusicAdapter;
 import com.d3coding.gmusicapi.items.MusicItem;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -63,6 +65,15 @@ public class HomeFragment extends Fragment {
     private ExecutorService downloadQueueService;
     private Download downloadQueue;
 
+    private FloatingActionButton floatingActionButton;
+
+    HomeFragment() {
+    }
+
+    HomeFragment(FloatingActionButton fab) {
+        floatingActionButton = fab;
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -83,9 +94,36 @@ public class HomeFragment extends Fragment {
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(mAdapter);
 
-        // TODO: scanFilesAndUpdateDB
+        if (floatingActionButton != null) {
+            recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                    super.onScrollStateChanged(recyclerView, newState);
+                    if (!recyclerView.canScrollVertically(1))
+                        floatingActionButton.hide();
+                    else if (!floatingActionButton.isExpanded()) {
+                        floatingActionButton.show();
+                        floatingActionButton.setCompatElevation(10);
+                    }
+                }
+            });
+        }
 
         updateList();
+
+        new Thread(() -> {
+            Log.i("Checkup", "Started");
+            List<String> online = new ArrayList<>();
+            for (MusicItem x : ConvertList)
+                if (gmusicFile.scan(x.getUUID()))
+                    db.insertUUIDbyDownloads(x.getUUID());
+                else
+                    online.add(x.getUUID());
+
+            // TODO: removeOnlineUUIDFromDB
+            Log.i("Checkup", "Finished");
+        }).start();
+
 
         mAdapter.setOnItemClickListener((view, position) -> {
 

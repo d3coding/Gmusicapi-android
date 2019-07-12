@@ -66,14 +66,14 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             toggle.syncState();
             navigationView.setNavigationItemSelectedListener(this);
 
-            getSupportFragmentManager().beginTransaction().add(R.id.fragment_content, new HomeFragment()).commit();
-
             if (!mPresets.contains(getString(R.string.last_update)))
                 refreshDB();
             else if (mPresets.getInt(getString(R.string.database_version), 0) != GMusicDB.getDatabaseVersion()) {
                 refreshDB();
                 mPresets.edit().putInt(getString(R.string.database_version), GMusicDB.getDatabaseVersion()).apply();
             }
+
+            getSupportFragmentManager().beginTransaction().add(R.id.fragment_content, new HomeFragment(fab)).commit();
 
         } else
             startActivityForResult(new Intent(this, LoginActivity.class), LOGIN_ACTIVITY);
@@ -160,8 +160,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         } else if (id == R.id.action_recreate) {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_content, new HomeFragment()).commit();
         } else if (id == R.id.action_logout) {
-            this.getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE).edit().remove(getString(R.string.token))
-                    .remove(getString(R.string.last_update)).apply();
+            this.getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE).edit().remove(getString(R.string.token)).remove(getString(R.string.last_update)).apply();
             deleteDatabase(GMusicDB.DATABASE_NAME);
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_content, new HomeFragment()).commit();
             return true;
@@ -174,9 +173,8 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == LOGIN_ACTIVITY) {
             if (resultCode == RESULT_OK) {
-                (getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE).edit())
-                        .putString(getString(R.string.token), data.getStringExtra(getString(R.string.token))).apply();
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_content, new HomeFragment()).commit();
+                (getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE).edit()).putString(getString(R.string.token), data.getStringExtra(getString(R.string.token))).apply();
+                recreate();
             } else if (resultCode == RESULT_CANCELED)
                 finish();
 

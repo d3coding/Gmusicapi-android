@@ -97,7 +97,7 @@ public class GMusicFile {
         }
     }
 
-    private boolean scan(String uuid) {
+    public boolean scan(String uuid) {
         return new File(FILE_PATCH + uuid + ".mp3").exists();
     }
 
@@ -140,7 +140,7 @@ public class GMusicFile {
     public Bitmap getThumbBitmap(String uuid) {
         File thumbFile = new File(getPathJPG(uuid));
         if (thumbFile.exists())
-            return BitmapFactory.decodeFile(thumbFile.getAbsolutePath());
+            return Bitmap.createScaledBitmap(BitmapFactory.decodeFile(thumbFile.getAbsolutePath()), 200, 200, false);
         else {
             String albumArtUrl = db.selectColumnByUUID(uuid, GMusicDB.column.albumArtUrl);
             if (!albumArtUrl.equals(""))
@@ -149,7 +149,7 @@ public class GMusicFile {
 
                     if (!thumbFile.exists()) {
                         Files.copy(url.openStream(), Paths.get(thumbFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
-                        return BitmapFactory.decodeFile(thumbFile.getAbsolutePath());
+                        return Bitmap.createScaledBitmap(BitmapFactory.decodeFile(thumbFile.getAbsolutePath()), 200, 200, false);
                     }
 
                 } catch (MalformedURLException e) {
