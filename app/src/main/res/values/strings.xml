@@ -12,6 +12,8 @@
     <string name="action_logout">Logout</string>
     <string name="action_refresh_db">Refresh DB</string>
     <string name="action_clean_db">Clean DB</string>
+    <string name="action_download_list">Download list</string>
+
 
     <string name="download">Download</string>
     <string name="remove">Remove</string>

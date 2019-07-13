@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
+import android.util.Log;
 
 import com.github.felixgail.gplaymusic.api.GPlayMusic;
 import com.github.felixgail.gplaymusic.model.enums.StreamQuality;
@@ -20,6 +21,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
 
 import svarzee.gps.gpsoauth.AuthToken;
 
@@ -52,49 +55,123 @@ public class GMusicFile {
             file_patch.mkdir();
     }
 
+
+    private List<Progress> ProgressList = new ArrayList<>();
+
     int getQueue(String uuid) {
-        if (!scan(uuid)) {
-            GMusicDB.TrackMetadata trackMetadata = db.selectByUUID(uuid);
+        if (scan(uuid)) {
 
-            try {
-                AuthToken authToken = TokenProvider.provideToken(context.getSharedPreferences(context.getString(R.string.preferences_user)
-                        , Context.MODE_PRIVATE).getString(context.getString(R.string.token), ""));
-                new GPlayMusic.Builder().setAuthToken(authToken).build().getTrackApi()
-                        .getTrack(trackMetadata.uuid).download(StreamQuality.HIGH, Paths.get(getPathMP3(trackMetadata.uuid)));
-
-                Mp3File mp3file = new Mp3File(getPathMP3(trackMetadata.uuid));
-                ID3v2 id3v2 = new ID3v24Tag();
-                id3v2.setTitle(trackMetadata.title);
-                id3v2.setArtist(trackMetadata.artist);
-                id3v2.setComposer(trackMetadata.composer);
-                id3v2.setAlbum(trackMetadata.album);
-                id3v2.setAlbumArtist(trackMetadata.albumArtist);
-                id3v2.setYear(String.valueOf(trackMetadata.year));
-                id3v2.setGenreDescription(trackMetadata.genre);
-
-                // TODO: noImageBug
-                if (existsThumbImagePath(uuid))
-                    id3v2.setAlbumImage(Files.readAllBytes(Paths.get(getPathJPG(trackMetadata.uuid))),
-                            Files.probeContentType(Paths.get(getPathJPG(trackMetadata.uuid))));
-
-                mp3file.setId3v2Tag(id3v2);
-                mp3file.save(FILE_PATCH + trackMetadata.uuid + ".mp3");
-
-                // Success
-                new GMusicDB(context).insertUUIDbyDownloads(trackMetadata.uuid);
-                return 1;
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                return 0;
-            } catch (Exception e) {
-                e.printStackTrace();
-                return 0;
-            }
-        } else {
             new GMusicDB(context).insertUUIDbyDownloads(uuid);
+            Log.i("Download ALREADY completed:", uuid);
             return 1;
+
+        } else {
+            boolean t = false;
+            for (Progress progress : ProgressList)
+                if (progress.UUID.equals(uuid)) {
+                    t = true;
+                    Log.i("Download ALREADY in queue:", uuid);
+                    break;
+                }
+
+            if (t) {
+                new GMusicDB(context).insertUUIDbyDownloads(uuid);
+                return 1;
+            } else {
+                GMusicDB.TrackMetadata trackMetadata = db.selectByUUID(uuid);
+
+                int taskId = ProgressList.size();
+                ProgressList.add(new Progress(taskId));
+
+                ProgressList.get(taskId).UUID = uuid;
+                ProgressList.get(taskId).doing = Doing.stopped;
+                ProgressList.get(taskId).percentage = 0.0f;
+
+                try {
+                    Log.i("Download STARTED:", uuid);
+                    ProgressList.get(taskId).doing = Doing.inProgress;
+
+                    AuthToken authToken = TokenProvider.provideToken(context.getSharedPreferences(context.getString(R.string.preferences_user)
+                            , Context.MODE_PRIVATE).getString(context.getString(R.string.token), ""));
+                    new GPlayMusic.Builder().setAuthToken(authToken).build().getTrackApi()
+                            .getTrack(trackMetadata.uuid).download(StreamQuality.HIGH, Paths.get(getPathMP3(trackMetadata.uuid)));
+
+                    Mp3File mp3file = new Mp3File(getPathMP3(trackMetadata.uuid));
+                    ID3v2 id3v2 = new ID3v24Tag();
+                    id3v2.setTitle(trackMetadata.title);
+                    id3v2.setArtist(trackMetadata.artist);
+                    id3v2.setComposer(trackMetadata.composer);
+                    id3v2.setAlbum(trackMetadata.album);
+                    id3v2.setAlbumArtist(trackMetadata.albumArtist);
+                    id3v2.setYear(String.valueOf(trackMetadata.year));
+                    id3v2.setGenreDescription(trackMetadata.genre);
+
+                    // TODO: noImageBug
+                    if (existsThumbImagePath(uuid))
+                        id3v2.setAlbumImage(Files.readAllBytes(Paths.get(getPathJPG(trackMetadata.uuid))),
+                                Files.probeContentType(Paths.get(getPathJPG(trackMetadata.uuid))));
+
+                    mp3file.setId3v2Tag(id3v2);
+                    mp3file.save(FILE_PATCH + trackMetadata.uuid + ".mp3");
+
+                    // Success
+                    new GMusicDB(context).insertUUIDbyDownloads(trackMetadata.uuid);
+                    Log.i("Download FINISHED:", uuid);
+                    ProgressList.get(taskId).doing = Doing.completed;
+                    ProgressList.get(taskId).percentage = 100f;
+                    return 1;
+
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                    Log.e("Download ERROR", uuid);
+                    ProgressList.get(taskId).doing = Doing.error;
+                    return 0;
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Log.e("Download ERROR", uuid);
+                    ProgressList.get(taskId).doing = Doing.error;
+                    return 0;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Log.e("Download ERROR", uuid);
+                    ProgressList.get(taskId).doing = Doing.error;
+                    return 0;
+                }
+            }
         }
+    }
+
+    public Bitmap getThumbBitmap(String uuid) {
+        File thumbFile = new File(getPathJPG(uuid));
+        if (thumbFile.exists())
+            return BitmapFactory.decodeFile(thumbFile.getAbsolutePath());
+            // return Bitmap.createScaledBitmap(BitmapFactory.decodeFile(thumbFile.getAbsolutePath()), 200, 200, false);
+        else {
+            String albumArtUrl = db.selectColumnByUUID(uuid, GMusicDB.column.albumArtUrl);
+            if (!albumArtUrl.equals(""))
+                try {
+                    URL url = new URL(albumArtUrl);
+
+                    if (!thumbFile.exists()) {
+                        Files.copy(url.openStream(), Paths.get(thumbFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
+                        return Bitmap.createScaledBitmap(BitmapFactory.decodeFile(thumbFile.getAbsolutePath()), 200, 200, false);
+                    }
+
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+        }
+        return getDefaultThumb();
+    }
+
+    enum Doing {
+        stopped, inProgress, completed, error
     }
 
     public boolean scan(String uuid) {
@@ -137,31 +214,15 @@ public class GMusicFile {
         return null;
     }
 
-    public Bitmap getThumbBitmap(String uuid) {
-        File thumbFile = new File(getPathJPG(uuid));
-        if (thumbFile.exists())
-            return Bitmap.createScaledBitmap(BitmapFactory.decodeFile(thumbFile.getAbsolutePath()), 200, 200, false);
-        else {
-            String albumArtUrl = db.selectColumnByUUID(uuid, GMusicDB.column.albumArtUrl);
-            if (!albumArtUrl.equals(""))
-                try {
-                    URL url = new URL(albumArtUrl);
+    class Progress {
+        int id;
+        String UUID;
+        Doing doing;
+        float percentage;
 
-                    if (!thumbFile.exists()) {
-                        Files.copy(url.openStream(), Paths.get(thumbFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
-                        return Bitmap.createScaledBitmap(BitmapFactory.decodeFile(thumbFile.getAbsolutePath()), 200, 200, false);
-                    }
-
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
+        Progress(int id) {
+            this.id = id;
         }
-        return getDefaultThumb();
     }
 
     public Bitmap getDefaultThumb() {

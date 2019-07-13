@@ -33,14 +33,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.d3coding.gmusicapi.items.MusicAdapter;
 import com.d3coding.gmusicapi.items.MusicItem;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class HomeFragment extends Fragment {
 
@@ -62,22 +60,11 @@ public class HomeFragment extends Fragment {
 
     private GMusicFile gmusicFile;
 
-    private ExecutorService downloadQueueService;
-    private Download downloadQueue;
+    public OnReachListEndListener onReachListEndListener;
+    private ThreadPoolExecutor downloadQueueService;
 
-    private FloatingActionButton floatingActionButton;
-
-    HomeFragment() {
-    }
-
-    HomeFragment(FloatingActionButton fab) {
-        floatingActionButton = fab;
-    }
-
-    @Nullable
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.frag_items, container, false);
+    void setOnReachListEndListener(OnReachListEndListener mOnReachListEndListener) {
+        this.onReachListEndListener = mOnReachListEndListener;
     }
 
     @Override
@@ -94,20 +81,7 @@ public class HomeFragment extends Fragment {
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(mAdapter);
 
-        if (floatingActionButton != null) {
-            recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-                @Override
-                public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                    super.onScrollStateChanged(recyclerView, newState);
-                    if (!recyclerView.canScrollVertically(1))
-                        floatingActionButton.hide();
-                    else if (!floatingActionButton.isExpanded()) {
-                        floatingActionButton.show();
-                        floatingActionButton.setCompatElevation(10);
-                    }
-                }
-            });
-        }
+        this.onReachListEndListener.OnReachListEnd(recyclerView);
 
         updateList();
 
@@ -179,29 +153,30 @@ public class HomeFragment extends Fragment {
                 linearComplete.setVisibility(View.GONE);
                 linearDownloading.setVisibility(View.VISIBLE);
 
-                if (downloadQueueService == null)
-                    downloadQueueService = Executors.newFixedThreadPool(DOWNLOADS_NUM);
-                if (downloadQueue == null)
-                    downloadQueue = new Download();
+                initThreads();
 
-                if (!downloadQueue.hasUUID(musicItem.getUUID())) {
-                    downloadQueue.addQueueService(musicItem.getUUID(),
-                            downloadQueueService.submit(() -> {
-                                // TODO: getDownloadStatus
-                                if (gmusicFile.getQueue(musicItem.getUUID()) != 0)
-                                    synchronized (this) {
-                                        ((Activity) getContext()).runOnUiThread(() -> {
-                                            linearComplete.setVisibility(View.VISIBLE);
-                                            linearDownloading.setVisibility(View.GONE);
-                                            mAdapter.notifyItemChanged(position);
-                                            downloadQueue.setComplete(musicItem.getUUID());
-                                        });
-                                    }
-                            })
-                    );
-                } else {
-                    // TODO: getStatus
-                }
+                downloadQueueService.execute(() -> {
+                    if (gmusicFile.getQueue(musicItem.getUUID()) != 0) {
+                        synchronized (this) {
+                            ((Activity) getContext()).runOnUiThread(() -> {
+                                linearComplete.setVisibility(View.VISIBLE);
+                                linearDownloading.setVisibility(View.GONE);
+                                mAdapter.notifyItemChanged(position);
+                            });
+                        }
+                    } else
+                        Log.e("DownloadQueueThread", "Finished with error");
+                });
+
+                // TODO: getDownloadStatus
+                if (gmusicFile.getQueue(musicItem.getUUID()) != 0)
+                    synchronized (this) {
+                        ((Activity) getContext()).runOnUiThread(() -> {
+                            linearComplete.setVisibility(View.VISIBLE);
+                            linearDownloading.setVisibility(View.GONE);
+                            mAdapter.notifyItemChanged(position);
+                        });
+                    }
             }
 
             vView.findViewById(R.id.opt_bt_play).setOnClickListener((view2) -> {
@@ -224,7 +199,28 @@ public class HomeFragment extends Fragment {
 
         });
 
+    }
 
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.frag_items, container, false);
+    }
+
+    void initThreads() {
+        if (downloadQueueService == null)
+            downloadQueueService = (ThreadPoolExecutor) Executors.newFixedThreadPool(DOWNLOADS_NUM);
+    }
+
+    void downloadFilter() {
+        initThreads();
+
+        for (MusicItem musicItem : ConvertList)
+            downloadQueueService.execute(() -> gmusicFile.getQueue(musicItem.getUUID()));
+    }
+
+    int getNumItems() {
+        return ConvertList.size();
     }
 
     void showFilter() {
@@ -255,6 +251,10 @@ public class HomeFragment extends Fragment {
         updateList();
     }
 
+    public interface OnReachListEndListener {
+        void OnReachListEnd(RecyclerView recyclerView);
+    }
+
     void updateList() {
         if (db == null)
             db = new GMusicDB(getContext());
@@ -262,47 +262,6 @@ public class HomeFragment extends Fragment {
         ConvertList.clear();
         ConvertList.addAll(db.getMusicItems(sort, sortOnline, filterText, desc));
         mAdapter.notifyDataSetChanged();
-    }
-
-    class Download {
-        private List<String> UUID;
-        private List<Future> future;
-
-        Download() {
-            this.UUID = new ArrayList<>();
-            this.future = new ArrayList<>();
-        }
-
-        int addQueueService(String UUID, Future future) {
-            this.UUID.add(UUID);
-            this.future.add(future);
-            return this.UUID.size() - 1;
-        }
-
-        boolean hasUUID(String UUID) {
-            for (String uuid : this.UUID)
-                if (UUID.equals(uuid))
-                    return true;
-            return false;
-        }
-
-        void setComplete(String UUID) {
-            for (int x = 0; x < this.UUID.size(); ++x)
-                if (this.UUID.get(x).equals(UUID)) {
-                    this.UUID.remove(x);
-                    this.future.remove(x);
-                    break;
-                }
-        }
-
-        public String getUUID(int position) {
-            return UUID.get(position);
-        }
-
-        public Future getFuture(int position) {
-            return future.get(position);
-        }
-
     }
 
 }

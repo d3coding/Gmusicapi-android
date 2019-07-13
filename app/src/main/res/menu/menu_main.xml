@@ -19,27 +19,34 @@
         app:showAsAction="always|collapseActionView" />
 
     <item
+        android:id="@+id/action_download_list"
+        android:orderInCategory="22"
+        android:title="@string/action_download_list"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_clean_db"
-        android:orderInCategory="21"
+        android:orderInCategory="24"
         android:title="@string/action_clean_db"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_refresh_db"
-        android:orderInCategory="22"
+        android:orderInCategory="26"
         android:title="@string/action_refresh_db"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_recreate"
-        android:orderInCategory="23"
+        android:orderInCategory="28"
         android:title="@string/action_recreate"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_logout"
-        android:orderInCategory="24"
+        android:orderInCategory="30"
         android:title="@string/action_logout"
         app:showAsAction="never" />
+
 
 </menu>

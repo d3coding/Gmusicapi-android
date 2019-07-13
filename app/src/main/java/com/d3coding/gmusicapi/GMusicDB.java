@@ -95,33 +95,35 @@ public class GMusicDB extends SQLiteOpenHelper {
     TrackMetadata selectByUUID(String uuid) {
         TrackMetadata trackMetadata = null;
 
-        SQLiteDatabase db = this.getReadableDatabase();
         String selection = column.uuid.name() + " = \"" + uuid + "\"";
 
-        Cursor cursor = db.query(TABLE_TRACKS, null, selection, null, null, null, null);
+        synchronized (this) {
+            SQLiteDatabase db = this.getReadableDatabase();
+            Cursor cursor = db.query(TABLE_TRACKS, null, selection, null, null, null, null);
 
-        if (cursor != null && cursor.moveToFirst())
-            trackMetadata = new TrackMetadata(cursor.getString(1),
-                    cursor.getString(2),
-                    cursor.getString(3),
-                    cursor.getString(4),
-                    cursor.getString(5),
-                    cursor.getString(6),
-                    cursor.getInt(7),
-                    cursor.getInt(8),
-                    cursor.getString(9),
-                    cursor.getString(10),
-                    cursor.getLong(11),
-                    cursor.getLong(12),
-                    cursor.getString(13),
-                    cursor.getString(14),
-                    cursor.getString(15),
-                    cursor.getInt(16));
-        try {
-            db.close();
-            cursor.close();
-        } catch (NullPointerException e) {
-            e.printStackTrace();
+            if (cursor != null && cursor.moveToFirst())
+                trackMetadata = new TrackMetadata(cursor.getString(1),
+                        cursor.getString(2),
+                        cursor.getString(3),
+                        cursor.getString(4),
+                        cursor.getString(5),
+                        cursor.getString(6),
+                        cursor.getInt(7),
+                        cursor.getInt(8),
+                        cursor.getString(9),
+                        cursor.getString(10),
+                        cursor.getLong(11),
+                        cursor.getLong(12),
+                        cursor.getString(13),
+                        cursor.getString(14),
+                        cursor.getString(15),
+                        cursor.getInt(16));
+            try {
+                db.close();
+                cursor.close();
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            }
         }
 
         return trackMetadata;
@@ -220,13 +222,14 @@ public class GMusicDB extends SQLiteOpenHelper {
 
         contentValues.put(downloadsColumn.uuid.name(), uuid);
         contentValues.put(downloadsColumn.downloadTimestamp.name(), System.currentTimeMillis());
-
-        SQLiteDatabase db = getWritableDatabase();
-        db.insert(TABLE_DOWNLOAD, null, contentValues);
-        try {
-            db.close();
-        } catch (NullPointerException e) {
-            e.printStackTrace();
+        synchronized (this) {
+            SQLiteDatabase db = getWritableDatabase();
+            db.insert(TABLE_DOWNLOAD, null, contentValues);
+            try {
+                db.close();
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            }
         }
 
     }
