@@ -42,11 +42,4 @@
         android:title="@string/action_recreate"
         app:showAsAction="never" />
 
-    <item
-        android:id="@+id/action_logout"
-        android:orderInCategory="30"
-        android:title="@string/action_logout"
-        app:showAsAction="never" />
-
-
 </menu>

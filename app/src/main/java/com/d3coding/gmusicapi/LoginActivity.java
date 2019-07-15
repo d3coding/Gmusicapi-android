@@ -119,7 +119,7 @@ public class LoginActivity extends AppCompatActivity {
     private void loginSuccessful(String stringRet) {
         Intent returnData = new Intent();
         returnData.putExtra(getString(R.string.token), stringRet);
-        setResult(HomeActivity.LOGIN_ACTIVITY);
+        setResult(Config.LOGIN_ACTIVITY);
         setResult(RESULT_OK, returnData);
         finish();
     }

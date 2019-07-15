@@ -44,8 +44,6 @@ import java.util.concurrent.TimeUnit;
 
 public class HomeFragment extends Fragment {
 
-    private static final int DOWNLOADS_NUM = 5;
-
     private GMusicDB db;
 
     private int sort = 0;
@@ -62,11 +60,14 @@ public class HomeFragment extends Fragment {
 
     private GMusicFile gmusicFile;
 
-    public OnReachListEndListener onReachListEndListener;
+    private RecyclerView.OnScrollListener mOnScrollListener;
+
     private ThreadPoolExecutor downloadQueueService;
 
-    void setOnReachListEndListener(OnReachListEndListener mOnReachListEndListener) {
-        this.onReachListEndListener = mOnReachListEndListener;
+    void addOnScrollListener(RecyclerView.OnScrollListener mOnScrollListener) {
+        this.mOnScrollListener = mOnScrollListener;
+        if (recyclerView != null)
+            recyclerView.addOnScrollListener(mOnScrollListener);
     }
 
     @Override
@@ -83,7 +84,8 @@ public class HomeFragment extends Fragment {
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(mAdapter);
 
-        this.onReachListEndListener.OnReachListEnd(recyclerView);
+        if (mOnScrollListener != null)
+            recyclerView.addOnScrollListener(mOnScrollListener);
 
         updateList();
 
@@ -182,7 +184,7 @@ public class HomeFragment extends Fragment {
 
                     if (progress.doing == GMusicFile.Doing.completed)
                         exec.shutdown();
-                }, 100, 100, TimeUnit.MILLISECONDS);
+                }, 0, 1, TimeUnit.MILLISECONDS);
 
                 builder.setOnCancelListener((dialog) -> exec.shutdown());
             }
@@ -218,7 +220,7 @@ public class HomeFragment extends Fragment {
 
     void initThreads() {
         if (downloadQueueService == null)
-            downloadQueueService = (ThreadPoolExecutor) Executors.newFixedThreadPool(DOWNLOADS_NUM);
+            downloadQueueService = (ThreadPoolExecutor) Executors.newFixedThreadPool(Config.SIMULTANEOUS_DOWNLOAD);
     }
 
     void downloadFilter() {
@@ -260,9 +262,6 @@ public class HomeFragment extends Fragment {
         updateList();
     }
 
-    public interface OnReachListEndListener {
-        void OnReachListEnd(RecyclerView recyclerView);
-    }
 
     void updateList() {
         if (db == null)
@@ -271,6 +270,8 @@ public class HomeFragment extends Fragment {
         ConvertList.clear();
         ConvertList.addAll(db.getMusicItems(sort, sortOnline, filterText, desc));
         mAdapter.notifyDataSetChanged();
+
+        recyclerView.startLayoutAnimation();
     }
 
 }

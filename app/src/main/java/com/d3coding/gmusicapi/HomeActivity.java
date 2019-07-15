@@ -27,20 +27,16 @@ import com.google.android.material.bottomappbar.BottomAppBar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 
-
 public class HomeActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
-    static final int LOGIN_ACTIVITY = 11;
-
-    private static final int MAX_DOWNLOADS = 25;
-
-    private boolean mState = false;
     private DrawerLayout drawer;
     private NavigationView navigationView;
 
     private BottomAppBar toolbar;
     private FloatingActionButton fab;
     SearchView searchView;
+
+    MenuItem refreshLogItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,18 +53,11 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             setContentView(R.layout.ac_home);
 
             toolbar = findViewById(R.id.toolbar);
-
             drawer = findViewById(R.id.drawer_layout);
             navigationView = findViewById(R.id.nav_view);
+            fab = findViewById(R.id.filter_button);
 
             setSupportActionBar(toolbar);
-
-            fab = findViewById(R.id.filter_button);
-            fab.setOnClickListener((v) -> {
-                HomeFragment homeFragment = (HomeFragment) getFragment(fragment.HOME);
-                if (homeFragment != null)
-                    homeFragment.showFilter();
-            });
 
             ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
             drawer.addDrawerListener(toggle);
@@ -77,26 +66,48 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
             if (!mPresets.contains(getString(R.string.last_update)))
                 refreshDB();
-            else if (mPresets.getInt(getString(R.string.database_version), 0) != GMusicDB.getDatabaseVersion()) {
-                refreshDB();
-                mPresets.edit().putInt(getString(R.string.database_version), GMusicDB.getDatabaseVersion()).apply();
-            }
 
-            swapFragment(fragment.HOME);
-
+            swapAndSetupFragment(new HomeFragment());
 
         } else
-            startActivityForResult(new Intent(this, LoginActivity.class), LOGIN_ACTIVITY);
+            startActivityForResult(new Intent(this, LoginActivity.class), Config.LOGIN_ACTIVITY);
 
+    }
+
+    void swapAndSetupFragment(Fragment fragment) {
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_content, fragment).commit();
+        getSupportFragmentManager().executePendingTransactions();
+
+        if (fragment.getClass() == HomeFragment.class) {
+            fab.setOnClickListener((v) -> ((HomeFragment) fragment).showFilter());
+
+            ((HomeFragment) fragment).addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                    super.onScrollStateChanged(recyclerView, newState);
+                    if (!recyclerView.canScrollVertically(1))
+                        fab.hide();
+                    else if (!fab.isExpanded()) {
+                        fab.show();
+                        fab.setCompatElevation(10);
+                    }
+                }
+            });
+
+        } else if (fragment.getClass() == PlaylistFragment.class) {
+            fab.setOnClickListener(null);
+        }
+
+        // TODO: reInflateOptionsMenuAccordingToFragment
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
-        menu.findItem(R.id.act_icon_refresh_log).setVisible(mState);
 
         MenuItem menuItem = menu.findItem(R.id.act_icon_search);
+        refreshLogItem = menu.findItem(R.id.act_icon_refresh_log);
 
         menuItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
             @Override
@@ -116,7 +127,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                HomeFragment homeFragment = (HomeFragment) getFragment(fragment.HOME);
+                HomeFragment homeFragment = (HomeFragment) getFragment(HomeFragment.class);
                 if (homeFragment != null)
                     homeFragment.filter(query);
                 return false;
@@ -124,7 +135,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                HomeFragment homeFragment = (HomeFragment) getFragment(fragment.HOME);
+                HomeFragment homeFragment = (HomeFragment) getFragment(HomeFragment.class);
                 if (homeFragment != null)
                     homeFragment.filter(newText);
                 return false;
@@ -132,9 +143,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         });
 
         searchView.findViewById(androidx.appcompat.R.id.search_plate).setBackgroundColor(Color.TRANSPARENT);
-
-        EditText searchEditText = searchView.findViewById(androidx.appcompat.R.id.search_src_text);
-        searchEditText.setHintTextColor(Color.GRAY);
+        ((EditText) searchView.findViewById(androidx.appcompat.R.id.search_src_text)).setHintTextColor(Color.GRAY);
 
         return true;
     }
@@ -153,83 +162,39 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
         if (id == R.id.act_icon_refresh_log) {
-            mState = false;
-            supportInvalidateOptionsMenu();
+            refreshLogItem.setVisible(false);
             return true;
         } else if (id == R.id.action_download_list) {
-            HomeFragment homeFragment = (HomeFragment) getFragment(fragment.HOME);
+            HomeFragment homeFragment = (HomeFragment) getFragment(HomeFragment.class);
             if (homeFragment != null)
-                if (homeFragment.getNumItems() <= MAX_DOWNLOADS)
-                    new AlertDialog.Builder(this, R.style.AppTheme_AlertDialog).setPositiveButton("Download!", (DialogInterface dialog, int which) -> {
-                        homeFragment.downloadFilter();
-                    }).setTitle("Caution!").setMessage("By clicking download you will init a thread for every music in the screen, this can take some space and last longer...").setCancelable(true).create().show();
+                if (homeFragment.getNumItems() <= Config.MAX_DOWNLOADS)
+                    new AlertDialog.Builder(this, R.style.AppTheme_AlertDialog).setPositiveButton("Download!", (DialogInterface dialog, int which) -> homeFragment.downloadFilter()).setTitle("Caution!")
+                            .setMessage("By clicking download you will init a thread for every music in the screen, this can take some space and last longer...").setCancelable(true).create().show();
                 else
-                    new AlertDialog.Builder(this, R.style.AppTheme_AlertDialog).setTitle("Too many musics!").setMessage("You can filter to get a minor number...").setCancelable(true).create().show();
+                    new AlertDialog.Builder(this, R.style.AppTheme_AlertDialog).setTitle("Too many musics!").setMessage("You can filter to get a minor number...")
+                            .setPositiveButton("ok", null).create().show();
 
         } else if (id == R.id.action_clean_db) {
             deleteDatabase(GMusicDB.DATABASE_NAME);
-            swapFragment(fragment.HOME);
+            swapAndSetupFragment(new HomeFragment());
             return true;
         } else if (id == R.id.action_refresh_db) {
-            mState = true;
-            supportInvalidateOptionsMenu();
+            refreshLogItem.setVisible(true);
             refreshDB();
             return true;
-        } else if (id == R.id.action_recreate) {
-            swapFragment(fragment.HOME);
-        } else if (id == R.id.action_logout) {
-            this.getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE).edit().remove(getString(R.string.token)).remove(getString(R.string.last_update)).apply();
-            deleteDatabase(GMusicDB.DATABASE_NAME);
-            swapFragment(fragment.HOME);
-            return true;
-        }
+        } else if (id == R.id.action_recreate)
+            swapAndSetupFragment(new HomeFragment());
+
         return super.onOptionsItemSelected(item);
-    }
-
-    private void swapFragment(fragment mFragment) {
-        if (mFragment == fragment.PLAYLIST) {
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_content, new PlaylistFragment()).commit();
-        } else {
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_content, new HomeFragment()).commit();
-            getSupportFragmentManager().executePendingTransactions();
-
-            HomeFragment homeFragment = (HomeFragment) getFragment(fragment.HOME);
-            if (homeFragment != null) {
-                homeFragment.setOnReachListEndListener(new HomeFragment.OnReachListEndListener() {
-                    @Override
-                    public void OnReachListEnd(RecyclerView recyclerView) {
-                        if (fab != null) {
-                            recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-                                @Override
-                                public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                                    super.onScrollStateChanged(recyclerView, newState);
-                                    if (!recyclerView.canScrollVertically(1))
-                                        fab.hide();
-                                    else if (!fab.isExpanded()) {
-                                        fab.show();
-                                        fab.setCompatElevation(10);
-                                    }
-                                }
-                            });
-                        }
-                    }
-                });
-            }
-
-        }
-
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == LOGIN_ACTIVITY) {
+        if (requestCode == Config.LOGIN_ACTIVITY) {
             if (resultCode == RESULT_OK) {
                 (getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE).edit()).putString(getString(R.string.token), data.getStringExtra(getString(R.string.token))).apply();
                 recreate();
@@ -246,11 +211,11 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         new GMusicNet(this).execute(mPresets.getString(getString(R.string.token), ""));
     }
 
-    private Fragment getFragment(fragment mFragment) {
+    private Fragment getFragment(Class mClass) {
         Fragment myFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_content);
-        if (mFragment == fragment.HOME && myFragment.getClass().getName() == HomeFragment.class.getName()) {
+        if (mClass == HomeFragment.class && myFragment.getClass() == HomeFragment.class) {
             return myFragment;
-        } else if (mFragment == fragment.PLAYLIST && myFragment.getClass().getName() == PlaylistFragment.class.getName()) {
+        } else if (mClass == PlaylistFragment.class && myFragment.getClass() == PlaylistFragment.class) {
             return myFragment;
         } else
             return null;
@@ -261,27 +226,24 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         // Handle navigation view item clicks here.
         int id = menuItem.getItemId();
 
-        if (id == R.id.nav_all) {
-            swapFragment(fragment.HOME);
-        } else if (id == R.id.nav_playlist) {
-            swapFragment(fragment.PLAYLIST);
-        } else if (id == R.id.nav_settings) {
-            // TODO: SettingsActivity
+        if (id == R.id.nav_all)
+            swapAndSetupFragment(new HomeFragment());
+        else if (id == R.id.nav_playlist)
+            swapAndSetupFragment(new PlaylistFragment());
+        else if (id == R.id.nav_settings)
             Toast.makeText(this, getString(R.string.null_description), Toast.LENGTH_SHORT).show();
-        } else if (id == R.id.nav_log) {
-            // TODO: LogActivity
+        else if (id == R.id.nav_log)
             Toast.makeText(this, getString(R.string.null_description), Toast.LENGTH_SHORT).show();
-        } else if (id == R.id.nav_info) {
-            // TODO: InfoActivity
+        else if (id == R.id.nav_info)
             Toast.makeText(this, getString(R.string.null_description), Toast.LENGTH_SHORT).show();
+        else if (id == R.id.nav_logout) {
+            this.getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE).edit().remove(getString(R.string.token)).remove(getString(R.string.last_update)).apply();
+            deleteDatabase(GMusicDB.DATABASE_NAME);
+            recreate();
         }
-
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
 
-    private enum fragment {
-        HOME, PLAYLIST
-    }
 }
 

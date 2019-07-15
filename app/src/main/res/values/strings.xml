@@ -49,6 +49,7 @@
     <string name="nav_s_main">Main</string>
     <string name="nav_s_other">Other</string>
     <string name="nav_log">Log</string>
+    <string name="nav_logout">Logout</string>
     <string name="nav_info">Info</string>
 
     <string name="radio_title">Title</string>

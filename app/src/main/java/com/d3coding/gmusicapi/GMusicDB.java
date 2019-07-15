@@ -47,16 +47,13 @@ public class GMusicDB extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
-    static int getDatabaseVersion() {
-        return DATABASE_VERSION;
-    }
-
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_TABLE_TRACKS);
         db.execSQL(SQL_CREATE_TABLE_DOWNLOAD);
     }
 
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // TODO: updateDB
         db.execSQL(SQL_DELETE_POSTS + TABLE_TRACKS);
         db.execSQL(SQL_DELETE_POSTS + TABLE_DOWNLOAD);
         onCreate(db);
