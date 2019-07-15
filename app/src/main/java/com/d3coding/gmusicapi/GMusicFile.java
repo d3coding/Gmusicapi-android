@@ -62,7 +62,7 @@ public class GMusicFile {
         if (scan(uuid)) {
 
             new GMusicDB(context).insertUUIDbyDownloads(uuid);
-            Log.i("Download ALREADY completed:", uuid);
+            Log.i("Download ALREADY completed", uuid);
             return 1;
 
         } else {
@@ -70,7 +70,7 @@ public class GMusicFile {
             for (Progress progress : ProgressList)
                 if (progress.UUID.equals(uuid)) {
                     t = true;
-                    Log.i("Download ALREADY in queue:", uuid);
+                    Log.i("Download ALREADY in queue", uuid);
                     break;
                 }
 
@@ -88,7 +88,7 @@ public class GMusicFile {
                 ProgressList.get(taskId).percentage = 0.0f;
 
                 try {
-                    Log.i("Download STARTED:", uuid);
+                    Log.i("Download STARTED", uuid);
                     ProgressList.get(taskId).doing = Doing.inProgress;
 
                     AuthToken authToken = TokenProvider.provideToken(context.getSharedPreferences(context.getString(R.string.preferences_user)
@@ -116,7 +116,7 @@ public class GMusicFile {
 
                     // Success
                     new GMusicDB(context).insertUUIDbyDownloads(trackMetadata.uuid);
-                    Log.i("Download FINISHED:", uuid);
+                    Log.i("Download FINISHED", uuid);
                     ProgressList.get(taskId).doing = Doing.completed;
                     ProgressList.get(taskId).percentage = 100f;
                     return 1;
@@ -142,6 +142,13 @@ public class GMusicFile {
         }
     }
 
+    public Progress getQueueStatus(String uuid) {
+        for (Progress progress : ProgressList)
+            if (progress.UUID.equals(uuid))
+                return progress;
+        return null;
+    }
+
     public Bitmap getThumbBitmap(String uuid) {
         File thumbFile = new File(getPathJPG(uuid));
         if (thumbFile.exists())
@@ -155,7 +162,8 @@ public class GMusicFile {
 
                     if (!thumbFile.exists()) {
                         Files.copy(url.openStream(), Paths.get(thumbFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
-                        return Bitmap.createScaledBitmap(BitmapFactory.decodeFile(thumbFile.getAbsolutePath()), 200, 200, false);
+                        //return Bitmap.createScaledBitmap(BitmapFactory.decodeFile(thumbFile.getAbsolutePath()), 200, 200, false);
+                        return BitmapFactory.decodeFile(thumbFile.getAbsolutePath());
                     }
 
                 } catch (MalformedURLException e) {

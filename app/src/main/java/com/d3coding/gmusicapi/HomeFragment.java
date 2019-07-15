@@ -38,7 +38,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class HomeFragment extends Fragment {
 
@@ -169,15 +171,22 @@ public class HomeFragment extends Fragment {
                 });
 
                 // TODO: getDownloadStatus
-                if (gmusicFile.getQueue(musicItem.getUUID()) != 0)
-                    synchronized (this) {
-                        ((Activity) getContext()).runOnUiThread(() -> {
-                            linearComplete.setVisibility(View.VISIBLE);
-                            linearDownloading.setVisibility(View.GONE);
-                            mAdapter.notifyItemChanged(position);
-                        });
-                    }
+
+                final ScheduledExecutorService exec = Executors.newScheduledThreadPool(1);
+
+                exec.scheduleAtFixedRate(() -> {
+                    GMusicFile.Progress progress = gmusicFile.getQueueStatus(musicItem.getUUID());
+
+                    if (progress.percentage <= 100)
+                        Log.i("Progress:", String.valueOf(progress.percentage));
+
+                    if (progress.doing == GMusicFile.Doing.completed)
+                        exec.shutdown();
+                }, 100, 100, TimeUnit.MILLISECONDS);
+
+                builder.setOnCancelListener((dialog) -> exec.shutdown());
             }
+
 
             vView.findViewById(R.id.opt_bt_play).setOnClickListener((view2) -> {
                 Uri uri = FileProvider.getUriForFile(getContext(), getContext().getPackageName() + ".fileprovider",
