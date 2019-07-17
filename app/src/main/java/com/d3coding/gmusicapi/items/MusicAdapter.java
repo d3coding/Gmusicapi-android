@@ -9,18 +9,19 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.d3coding.gmusicapi.GMusicDB;
-import com.d3coding.gmusicapi.GMusicFile;
 import com.d3coding.gmusicapi.R;
+import com.d3coding.gmusicapi.gmusic.Database;
+import com.d3coding.gmusicapi.gmusic.Download;
 
 import java.util.List;
 
 public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder> {
 
     private List<MusicItem> convertList;
-    private GMusicFile gmusicFile;
+    private Download mDownload;
     private OnItemClickListener clickListener;
     private OnItemLongClickListener longListener;
 
@@ -30,7 +31,7 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
 
     @Override
     public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        gmusicFile = new GMusicFile(parent.getContext());
+        mDownload = new Download(parent.getContext());
         return new MyViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.rec_music_item, parent, false));
     }
 
@@ -53,16 +54,14 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
         holder.time.setText(musicItems.getDuration());
         holder.albumArt.setImageBitmap(null);
 
-        if (new GMusicDB(holder.title.getContext()).countDownloadsByUUID(musicItems.getUUID()) > 0) {
-            holder.status.setText(R.string.radio_offline);
-            holder.status.setTextColor(Color.rgb(0, 192, 0));
-        } else {
-            holder.status.setText(R.string.radio_online);
-            holder.status.setTextColor(Color.rgb(192, 0, 0));
-        }
+        if (new Database(holder.title.getContext()).countDownloadsByUUID(musicItems.getUUID()) > 0)
+            holder.status.setCardBackgroundColor(Color.rgb(0, 192, 0));
+        else
+            holder.status.setCardBackgroundColor(Color.rgb(192, 0, 0));
+
 
         new Thread(() -> {
-            Bitmap bitmap = gmusicFile.getThumbBitmap(musicItems.getUUID());
+            Bitmap bitmap = mDownload.getThumbBitmap(musicItems.getUUID());
             synchronized (this) {
                 ((Activity) holder.title.getContext()).runOnUiThread(() -> holder.albumArt.setImageBitmap(bitmap));
             }
@@ -84,7 +83,8 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
     }
 
     class MyViewHolder extends RecyclerView.ViewHolder {
-        TextView title, artist, album, time, status;
+        TextView title, artist, album, time;
+        CardView status;
         ImageView albumArt;
 
         MyViewHolder(View view) {
@@ -114,7 +114,7 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
             album = view.findViewById(R.id.album);
             albumArt = view.findViewById(R.id.thumb);
             time = view.findViewById(R.id.time);
-            status = view.findViewById(R.id.status);
+            status = view.findViewById(R.id.status_card);
         }
     }
 

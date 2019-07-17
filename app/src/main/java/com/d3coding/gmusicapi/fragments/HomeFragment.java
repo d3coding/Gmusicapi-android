@@ -1,4 +1,4 @@
-package com.d3coding.gmusicapi;
+package com.d3coding.gmusicapi.fragments;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -31,6 +31,10 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.d3coding.gmusicapi.Config;
+import com.d3coding.gmusicapi.R;
+import com.d3coding.gmusicapi.gmusic.Database;
+import com.d3coding.gmusicapi.gmusic.Download;
 import com.d3coding.gmusicapi.items.MusicAdapter;
 import com.d3coding.gmusicapi.items.MusicItem;
 
@@ -44,27 +48,25 @@ import java.util.concurrent.TimeUnit;
 
 public class HomeFragment extends Fragment {
 
-    private GMusicDB db;
+    private Database db;
 
     private int sort = 0;
     private int sortOnline = 0;
 
     private String filterText = "";
-    private boolean desc;
-
 
     private List<MusicItem> ConvertList = new ArrayList<>();
     private MusicAdapter mAdapter;
 
     private RecyclerView recyclerView;
 
-    private GMusicFile gmusicFile;
+    private Download mDownload;
 
     private RecyclerView.OnScrollListener mOnScrollListener;
 
     private ThreadPoolExecutor downloadQueueService;
 
-    void addOnScrollListener(RecyclerView.OnScrollListener mOnScrollListener) {
+    public void addOnScrollListener(RecyclerView.OnScrollListener mOnScrollListener) {
         this.mOnScrollListener = mOnScrollListener;
         if (recyclerView != null)
             recyclerView.addOnScrollListener(mOnScrollListener);
@@ -75,7 +77,7 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(layoutView, savedInstanceState);
 
         recyclerView = layoutView.findViewById(R.id.items);
-        gmusicFile = new GMusicFile(getContext());
+        mDownload = new Download(getContext());
         mAdapter = new MusicAdapter(ConvertList);
 
         LayoutAnimationController animation = AnimationUtils.loadLayoutAnimation(getContext(), R.anim.layout_animation_fall_down);
@@ -91,23 +93,32 @@ public class HomeFragment extends Fragment {
 
         new Thread(() -> {
             Log.i("Checkup", "Started");
+            List<String> offline = new ArrayList<>();
             List<String> online = new ArrayList<>();
-            for (MusicItem x : ConvertList)
-                if (gmusicFile.scan(x.getUUID()))
-                    db.insertUUIDbyDownloads(x.getUUID());
+            for (MusicItem musicItem : ConvertList)
+                if (mDownload.scan(musicItem.getUUID()))
+                    offline.add(musicItem.getUUID());
                 else
-                    online.add(x.getUUID());
+                    online.add(musicItem.getUUID());
+
+            for (String UUID : offline)
+                db.insertUUIDbyDownloads(UUID);
 
             // TODO: removeOnlineUUIDFromDB
+
+            synchronized (this) {
+                ((Activity) getContext()).runOnUiThread(() -> mAdapter.notifyDataSetChanged());
+            }
+
             Log.i("Checkup", "Finished");
         }).start();
 
 
         mAdapter.setOnItemClickListener((view, position) -> {
 
-            Bitmap bitmap = gmusicFile.getBitmapThumbImage(ConvertList.get(position).getUUID());
+            Bitmap bitmap = mDownload.getBitmapThumbImage(ConvertList.get(position).getUUID());
             if (bitmap == null)
-                bitmap = gmusicFile.getDefaultThumb();
+                bitmap = mDownload.getDefaultThumb();
 
             AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
 
@@ -135,9 +146,9 @@ public class HomeFragment extends Fragment {
         mAdapter.setOnItemLongClickListener((view, position) -> {
             MusicItem musicItem = ConvertList.get(position);
 
-            Bitmap bitmap = gmusicFile.getBitmapThumbImage(musicItem.getUUID());
+            Bitmap bitmap = mDownload.getBitmapThumbImage(musicItem.getUUID());
             if (bitmap == null)
-                bitmap = gmusicFile.getDefaultThumb();
+                bitmap = mDownload.getDefaultThumb();
 
             AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
             ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.ad_music_opt, null);
@@ -160,7 +171,7 @@ public class HomeFragment extends Fragment {
                 initThreads();
 
                 downloadQueueService.execute(() -> {
-                    if (gmusicFile.getQueue(musicItem.getUUID()) != 0) {
+                    if (mDownload.getQueue(musicItem.getUUID()) != 0) {
                         synchronized (this) {
                             ((Activity) getContext()).runOnUiThread(() -> {
                                 linearComplete.setVisibility(View.VISIBLE);
@@ -177,12 +188,12 @@ public class HomeFragment extends Fragment {
                 final ScheduledExecutorService exec = Executors.newScheduledThreadPool(1);
 
                 exec.scheduleAtFixedRate(() -> {
-                    GMusicFile.Progress progress = gmusicFile.getQueueStatus(musicItem.getUUID());
+                    Download.Progress progress = mDownload.getQueueStatus(musicItem.getUUID());
 
                     if (progress.percentage <= 100)
                         Log.i("Progress:", String.valueOf(progress.percentage));
 
-                    if (progress.doing == GMusicFile.Doing.completed)
+                    if (progress.doing == Download.Doing.completed)
                         exec.shutdown();
                 }, 0, 1, TimeUnit.MILLISECONDS);
 
@@ -223,18 +234,18 @@ public class HomeFragment extends Fragment {
             downloadQueueService = (ThreadPoolExecutor) Executors.newFixedThreadPool(Config.SIMULTANEOUS_DOWNLOAD);
     }
 
-    void downloadFilter() {
+    public void downloadFilter() {
         initThreads();
 
         for (MusicItem musicItem : ConvertList)
-            downloadQueueService.execute(() -> gmusicFile.getQueue(musicItem.getUUID()));
+            downloadQueueService.execute(() -> mDownload.getQueue(musicItem.getUUID()));
     }
 
-    int getNumItems() {
+    public int getNumItems() {
         return ConvertList.size();
     }
 
-    void showFilter() {
+    public void showFilter() {
         {
             ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.ad_filter, null);
             Spinner spinner_organize = vView.findViewById(R.id.filter_organize);
@@ -257,7 +268,7 @@ public class HomeFragment extends Fragment {
 
     }
 
-    void filter(String filterText) {
+    public void filter(String filterText) {
         this.filterText = filterText;
         updateList();
     }
@@ -265,10 +276,10 @@ public class HomeFragment extends Fragment {
 
     void updateList() {
         if (db == null)
-            db = new GMusicDB(getContext());
+            db = new Database(getContext());
 
         ConvertList.clear();
-        ConvertList.addAll(db.getMusicItems(sort, sortOnline, filterText, desc));
+        ConvertList.addAll(db.getMusicItems(sort, sortOnline, filterText, false));
         mAdapter.notifyDataSetChanged();
 
         recyclerView.startLayoutAnimation();

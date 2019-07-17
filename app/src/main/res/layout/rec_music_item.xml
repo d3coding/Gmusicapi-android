@@ -11,25 +11,6 @@
     android:gravity="center_horizontal"
     android:orientation="horizontal">
 
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardView"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
-        app:cardCornerRadius="4dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <ImageView
-            android:id="@+id/thumb"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:contentDescription="@string/null_description" />
-
-    </androidx.cardview.widget.CardView>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/cON"
@@ -38,10 +19,10 @@
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
         android:layout_weight="1"
-        app:layout_constraintBottom_toBottomOf="@+id/cardView"
+        app:layout_constraintBottom_toBottomOf="@+id/relativeView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/cardView"
-        app:layout_constraintTop_toTopOf="@+id/cardView">
+        app:layout_constraintStart_toEndOf="@+id/relativeView"
+        app:layout_constraintTop_toTopOf="@+id/relativeView">
 
         <LinearLayout
             android:id="@+id/fff"
@@ -131,26 +112,49 @@
                 android:text="@string/item_duration"
                 android:textColor="@color/recycleTextColor" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="5dp"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:text="@string/item_separator"
-                android:textColor="@color/recycleTextColor" />
-
-            <TextView
-                android:id="@+id/status"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:text="@string/item_status"
-                android:textColor="@color/recycleTextColor" />
-
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/relativeView"
+        android:layout_width="72dp"
+        android:layout_height="70dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/status_card"
+            android:layout_width="8dp"
+            android:layout_height="70dp"
+            android:layout_toEndOf="@+id/cardView"
+            app:cardBackgroundColor="@color/colorAccent"
+            app:cardCornerRadius="4dp"
+            app:layout_anchor="@+id/cardView"
+            app:layout_anchorGravity="end|top" />
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardView"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:layout_gravity="bottom"
+            app:cardCornerRadius="4dp">
+
+            <ImageView
+                android:id="@+id/thumb"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@string/null_description"
+                app:layout_anchor="@+id/cardView"
+                app:layout_anchorGravity="center" />
+
+        </androidx.cardview.widget.CardView>
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

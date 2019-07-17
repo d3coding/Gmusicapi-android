@@ -1,4 +1,4 @@
-package com.d3coding.gmusicapi;
+package com.d3coding.gmusicapi.gmusic;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.os.Environment;
 import android.util.Log;
 
+import com.d3coding.gmusicapi.R;
 import com.github.felixgail.gplaymusic.api.GPlayMusic;
 import com.github.felixgail.gplaymusic.model.enums.StreamQuality;
 import com.github.felixgail.gplaymusic.util.TokenProvider;
@@ -26,7 +27,7 @@ import java.util.List;
 
 import svarzee.gps.gpsoauth.AuthToken;
 
-public class GMusicFile {
+public class Download {
 
     private String MUSIC_CACHE_PATH;
     private String THUMB_CACHE_PATH;
@@ -34,11 +35,11 @@ public class GMusicFile {
 
     private Context context;
 
-    private GMusicDB db;
+    private Database db;
 
-    public GMusicFile(Context context) {
+    public Download(Context context) {
         this.context = context;
-        db = new GMusicDB(context);
+        db = new Database(context);
 
 
         MUSIC_CACHE_PATH = context.getCacheDir() + "/m_cache/";
@@ -58,10 +59,10 @@ public class GMusicFile {
 
     private List<Progress> ProgressList = new ArrayList<>();
 
-    int getQueue(String uuid) {
+    public int getQueue(String uuid) {
         if (scan(uuid)) {
 
-            new GMusicDB(context).insertUUIDbyDownloads(uuid);
+            new Database(context).insertUUIDbyDownloads(uuid);
             Log.i("Download ALREADY completed", uuid);
             return 1;
 
@@ -75,10 +76,10 @@ public class GMusicFile {
                 }
 
             if (t) {
-                new GMusicDB(context).insertUUIDbyDownloads(uuid);
+                new Database(context).insertUUIDbyDownloads(uuid);
                 return 1;
             } else {
-                GMusicDB.TrackMetadata trackMetadata = db.selectByUUID(uuid);
+                Database.TrackMetadata trackMetadata = db.selectByUUID(uuid);
 
                 int taskId = ProgressList.size();
                 ProgressList.add(new Progress(taskId));
@@ -115,7 +116,7 @@ public class GMusicFile {
                     mp3file.save(FILE_PATCH + trackMetadata.uuid + ".mp3");
 
                     // Success
-                    new GMusicDB(context).insertUUIDbyDownloads(trackMetadata.uuid);
+                    new Database(context).insertUUIDbyDownloads(trackMetadata.uuid);
                     Log.i("Download FINISHED", uuid);
                     ProgressList.get(taskId).doing = Doing.completed;
                     ProgressList.get(taskId).percentage = 100f;
@@ -155,7 +156,7 @@ public class GMusicFile {
             return BitmapFactory.decodeFile(thumbFile.getAbsolutePath());
             // return Bitmap.createScaledBitmap(BitmapFactory.decodeFile(thumbFile.getAbsolutePath()), 200, 200, false);
         else {
-            String albumArtUrl = db.selectColumnByUUID(uuid, GMusicDB.column.albumArtUrl);
+            String albumArtUrl = db.selectColumnByUUID(uuid, Database.column.albumArtUrl);
             if (!albumArtUrl.equals(""))
                 try {
                     URL url = new URL(albumArtUrl);
@@ -178,19 +179,11 @@ public class GMusicFile {
         return getDefaultThumb();
     }
 
-    enum Doing {
-        stopped, inProgress, completed, error
-    }
-
-    public boolean scan(String uuid) {
-        return new File(FILE_PATCH + uuid + ".mp3").exists();
-    }
-
     private boolean existsThumbImagePath(String uuid) {
         File imgFile = new File(getPathJPG(uuid));
         if (imgFile.exists())
             return true;
-        else if (db.selectColumnByUUID(uuid, GMusicDB.column.albumArtUrl).equals("")) {
+        else if (db.selectColumnByUUID(uuid, Database.column.albumArtUrl).equals("")) {
             return false;
         } else {
             try {
@@ -202,8 +195,12 @@ public class GMusicFile {
         }
     }
 
+    public boolean scan(String uuid) {
+        return new File(FILE_PATCH + uuid + ".mp3").exists();
+    }
+
     private String downloadThumbImage(String uuid) throws MalformedURLException {
-        URL url = new URL(db.selectColumnByUUID(uuid, GMusicDB.column.albumArtUrl));
+        URL url = new URL(db.selectColumnByUUID(uuid, Database.column.albumArtUrl));
         try {
             File imgFile = new File(getPathJPG(uuid));
             if (!imgFile.exists())
@@ -215,6 +212,10 @@ public class GMusicFile {
         }
     }
 
+    public enum Doing {
+        stopped, inProgress, completed, error
+    }
+
     public Bitmap getBitmapThumbImage(String uuid) {
         File imgFile = new File(getPathJPG(uuid));
         if (imgFile.exists())
@@ -222,13 +223,13 @@ public class GMusicFile {
         return null;
     }
 
-    class Progress {
-        int id;
-        String UUID;
-        Doing doing;
-        float percentage;
+    public class Progress {
+        public int id;
+        public String UUID;
+        public Doing doing;
+        public float percentage;
 
-        Progress(int id) {
+        public Progress(int id) {
             this.id = id;
         }
     }

@@ -23,6 +23,10 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.d3coding.gmusicapi.fragments.HomeFragment;
+import com.d3coding.gmusicapi.fragments.PlaylistFragment;
+import com.d3coding.gmusicapi.gmusic.Database;
+import com.d3coding.gmusicapi.gmusic.Network;
 import com.google.android.material.bottomappbar.BottomAppBar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
@@ -153,7 +157,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         if (drawer.isDrawerOpen(GravityCompat.START))
             drawer.closeDrawer(GravityCompat.START);
         else {
-            if (searchView != null) {
+            if (searchView.hasFocus()) {
                 searchView.setIconified(true);
             } else
                 super.onBackPressed();
@@ -178,7 +182,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                             .setPositiveButton("ok", null).create().show();
 
         } else if (id == R.id.action_clean_db) {
-            deleteDatabase(GMusicDB.DATABASE_NAME);
+            deleteDatabase(Database.DATABASE_NAME);
             swapAndSetupFragment(new HomeFragment());
             return true;
         } else if (id == R.id.action_refresh_db) {
@@ -206,9 +210,9 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void refreshDB() {
-        deleteDatabase(GMusicDB.DATABASE_NAME);
+        deleteDatabase(Database.DATABASE_NAME);
         SharedPreferences mPresets = getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE);
-        new GMusicNet(this).execute(mPresets.getString(getString(R.string.token), ""));
+        new Network(this).execute(mPresets.getString(getString(R.string.token), ""));
     }
 
     private Fragment getFragment(Class mClass) {
@@ -238,7 +242,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             Toast.makeText(this, getString(R.string.null_description), Toast.LENGTH_SHORT).show();
         else if (id == R.id.nav_logout) {
             this.getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE).edit().remove(getString(R.string.token)).remove(getString(R.string.last_update)).apply();
-            deleteDatabase(GMusicDB.DATABASE_NAME);
+            deleteDatabase(Database.DATABASE_NAME);
             recreate();
         }
         drawer.closeDrawer(GravityCompat.START);

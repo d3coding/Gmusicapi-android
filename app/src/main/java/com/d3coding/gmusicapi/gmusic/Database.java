@@ -1,4 +1,4 @@
-package com.d3coding.gmusicapi;
+package com.d3coding.gmusicapi.gmusic;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -10,10 +10,11 @@ import com.d3coding.gmusicapi.items.MusicItem;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
-public class GMusicDB extends SQLiteOpenHelper {
+public class Database extends SQLiteOpenHelper {
 
-    static final String DATABASE_NAME = "TrackMetadata.db";
+    public static final String DATABASE_NAME = "TrackMetadata.db";
     private static final String TABLE_TRACKS = "tracks";
     private static final String TABLE_DOWNLOAD = "downloads";
     private static final String SQL_CREATE_TABLE_DOWNLOAD = "CREATE TABLE " + TABLE_DOWNLOAD + " ( " +
@@ -43,7 +44,7 @@ public class GMusicDB extends SQLiteOpenHelper {
             column.totalTrackCount.name() + " INTEGER );";
     private static final String SQL_DELETE_POSTS = "DROP TABLE IF EXISTS ";
 
-    public GMusicDB(Context context) {
+    public Database(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
@@ -59,7 +60,7 @@ public class GMusicDB extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    void insertByTrackMetadata(List<TrackMetadata> trackMetadata) {
+    public void insertByTrackMetadata(List<TrackMetadata> trackMetadata) {
         SQLiteDatabase db = getWritableDatabase();
         for (TrackMetadata track : trackMetadata) {
             ContentValues values = new ContentValues();
@@ -89,7 +90,7 @@ public class GMusicDB extends SQLiteOpenHelper {
         onUpgrade(db, oldVersion, newVersion);
     }
 
-    TrackMetadata selectByUUID(String uuid) {
+    public TrackMetadata selectByUUID(String uuid) {
         TrackMetadata trackMetadata = null;
 
         String selection = column.uuid.name() + " = \"" + uuid + "\"";
@@ -126,7 +127,7 @@ public class GMusicDB extends SQLiteOpenHelper {
         return trackMetadata;
     }
 
-    String selectColumnByUUID(String uuid, column columnName) {
+    public String selectColumnByUUID(String uuid, column columnName) {
         String ret = "";
         String[] columns = {columnName.name()};
         String selection = column.uuid.name() + " = \"" + uuid + "\"";
@@ -149,7 +150,7 @@ public class GMusicDB extends SQLiteOpenHelper {
         return ret;
     }
 
-    List<MusicItem> getMusicItems(int order, int sortOnline, String filterTitle, boolean desc) {
+    public List<MusicItem> getMusicItems(int order, int sortOnline, String filterTitle, boolean desc) {
         List<MusicItem> ret = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -198,8 +199,10 @@ public class GMusicDB extends SQLiteOpenHelper {
 
         if (cursor != null && cursor.moveToFirst()) {
             do {
-                ret.add(new MusicItem(cursor.getString(0), cursor.getString(1), cursor.getString(2),
-                        cursor.getString(3), cursor.getString(4)));
+                Long milliseconds = Long.parseLong(cursor.getString(4));
+                ret.add(new MusicItem(cursor.getString(0), cursor.getString(1), cursor.getString(2), cursor.getString(3),
+                        String.format("%02d:%02d ", TimeUnit.MILLISECONDS.toMinutes(milliseconds), TimeUnit.MILLISECONDS.toSeconds(milliseconds) -
+                                TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milliseconds)))));
             } while (cursor.moveToNext());
         }
 
@@ -248,7 +251,7 @@ public class GMusicDB extends SQLiteOpenHelper {
     }
 
 
-    enum column {
+    public enum column {
         id, uuid, title, artist, composer, album, albumArtist, year, trackNumber, genre, durationMillis, albumArtUrl, discNumber, estimatedSize, trackType, albumId,
         artistId, explicitType, playCount, rating, beatsPerMinute, comment, totalTrackCount, totalDiscCount, lastModifiedTimestamp, creationTimestamp, recentTimestamp
     }
@@ -257,19 +260,19 @@ public class GMusicDB extends SQLiteOpenHelper {
         id, uuid, downloadTimestamp
     }
 
-    static class TrackMetadata {
-        String uuid, title, artist, composer, album, albumArtist;
-        int year, trackNumber;
-        String genre, albumArtUrl;
-        int discNumber;
-        Long estimatedSize, durationMillis;
-        String trackType, albumId, artistId, explicitType;
-        int playCount;
-        String rating;
-        int beatsPerMinute;
-        String comment;
-        int totalTrackCount, totalDiscCount;
-        String lastModifiedTimestamp, creationTimestamp, recentTimestamp;
+    public static class TrackMetadata {
+        public String uuid, title, artist, composer, album, albumArtist;
+        public int year, trackNumber;
+        public String genre, albumArtUrl;
+        public int discNumber;
+        public Long estimatedSize, durationMillis;
+        public String trackType, albumId, artistId, explicitType;
+        public int playCount;
+        public String rating;
+        public int beatsPerMinute;
+        public String comment;
+        public int totalTrackCount, totalDiscCount;
+        public String lastModifiedTimestamp, creationTimestamp, recentTimestamp;
 
         TrackMetadata() {
         }
@@ -294,10 +297,6 @@ public class GMusicDB extends SQLiteOpenHelper {
             this.comment = comment;
             this.totalTrackCount = totalTrackCount;
         }
-    }
-
-    public enum SortOnline {
-        all, offline, online
     }
 
 }

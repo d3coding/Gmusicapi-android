@@ -1,10 +1,11 @@
-package com.d3coding.gmusicapi;
+package com.d3coding.gmusicapi.gmusic;
 
 import android.app.Activity;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.widget.Toast;
 
+import com.d3coding.gmusicapi.R;
 import com.github.felixgail.gplaymusic.api.GPlayMusic;
 import com.github.felixgail.gplaymusic.api.TrackApi;
 import com.github.felixgail.gplaymusic.model.Track;
@@ -20,11 +21,11 @@ import java.util.concurrent.TimeUnit;
 
 import svarzee.gps.gpsoauth.AuthToken;
 
-public class GMusicNet extends AsyncTask<String, Void, Void> {
+public class Network extends AsyncTask<String, Void, Void> {
 
     private Context context;
 
-    GMusicNet(Context context) {
+    public Network(Context context) {
         this.context = context;
     }
 
@@ -48,10 +49,10 @@ public class GMusicNet extends AsyncTask<String, Void, Void> {
 
             System.out.println("Database size: " + listTrack.size());
 
-            List<GMusicDB.TrackMetadata> chunkList = new ArrayList<>();
+            List<Database.TrackMetadata> chunkList = new ArrayList<>();
 
             for (Track track : listTrack) {
-                GMusicDB.TrackMetadata trackMetadata = new GMusicDB.TrackMetadata();
+                Database.TrackMetadata trackMetadata = new Database.TrackMetadata();
 
                 trackMetadata.uuid = track.getID();
                 trackMetadata.title = track.getTitle();
@@ -114,7 +115,7 @@ public class GMusicNet extends AsyncTask<String, Void, Void> {
                 chunkList.add(trackMetadata);
             }
 
-            new GMusicDB(context).insertByTrackMetadata(chunkList);
+            new Database(context).insertByTrackMetadata(chunkList);
 
             synchronized (this) {
                 ((Activity) context).runOnUiThread(() -> Toast.makeText(context, "Database info download complete...", Toast.LENGTH_LONG).show());
