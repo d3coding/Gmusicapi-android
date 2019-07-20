@@ -112,6 +112,13 @@ public class Network extends AsyncTask<String, Void, Void> {
                 else
                     trackMetadata.totalTrackCount = 0;
 
+                //Timestamp
+                Optional<String> optionalCreationTimestamp = track.getCreationTimestamp();
+                if (optionalComment.isPresent())
+                    trackMetadata.creationTimestamp = optionalCreationTimestamp.get();
+                else
+                    trackMetadata.creationTimestamp = "";
+
                 chunkList.add(trackMetadata);
             }
 

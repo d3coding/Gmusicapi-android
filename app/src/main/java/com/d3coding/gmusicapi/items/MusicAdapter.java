@@ -24,6 +24,8 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
     private Download mDownload;
     private OnItemClickListener clickListener;
     private OnItemLongClickListener longListener;
+    public OnDownloadItemListener downloadItem;
+    public OnPlayItemListener playItem;
 
     public MusicAdapter(List<MusicItem> value) {
         this.convertList = value;
@@ -43,6 +45,23 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
     public void setOnItemLongClickListener(OnItemLongClickListener listener) {
         this.longListener = listener;
     }
+
+    public void setOnDownloadItem(OnDownloadItemListener mOnDownloadItem) {
+        this.downloadItem = mOnDownloadItem;
+    }
+
+    public void setOnPlayItem(OnPlayItemListener mOnPlayItem) {
+        this.playItem = mOnPlayItem;
+    }
+
+    String getItemUUID(int position) {
+        return convertList.get(position).getUUID();
+    }
+
+    public interface OnDownloadItemListener {
+        void OnDownloadItem(String UUID);
+    }
+
 
     @Override
     public void onBindViewHolder(final MyViewHolder holder, int position) {
@@ -72,6 +91,10 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
     @Override
     public int getItemCount() {
         return convertList.size();
+    }
+
+    public interface OnPlayItemListener {
+        void OnPlayItem(String UUID);
     }
 
     public interface OnItemClickListener {

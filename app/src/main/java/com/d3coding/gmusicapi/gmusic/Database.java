@@ -21,7 +21,7 @@ public class Database extends SQLiteOpenHelper {
             downloadsColumn.id.name() + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
             downloadsColumn.uuid.name() + " TEXT NOT NULL, " +
             downloadsColumn.downloadTimestamp.name() + " INTEGER );";
-    private static final int DATABASE_VERSION = 6;
+    private static final int DATABASE_VERSION = 7;
     private static final String TYPE_TEXT = " TEXT, ";
     private static final String TYPE_INTEGER = " INTEGER, ";
     private static final String SQL_CREATE_TABLE_TRACKS = "CREATE TABLE " + TABLE_TRACKS + " ( " +
@@ -41,6 +41,7 @@ public class Database extends SQLiteOpenHelper {
             column.albumId.name() + TYPE_TEXT +
             column.artistId.name() + TYPE_TEXT +
             column.comment.name() + TYPE_TEXT +
+            column.creationTimestamp.name() + TYPE_TEXT +
             column.totalTrackCount.name() + " INTEGER );";
     private static final String SQL_DELETE_POSTS = "DROP TABLE IF EXISTS ";
 
@@ -80,6 +81,7 @@ public class Database extends SQLiteOpenHelper {
             values.put(column.artistId.name(), track.artistId);
             values.put(column.comment.name(), track.comment);
             values.put(column.totalTrackCount.name(), track.totalTrackCount);
+            values.put(column.creationTimestamp.name(), track.creationTimestamp);
 
             db.insert(TABLE_TRACKS, null, values);
         }
@@ -159,6 +161,8 @@ public class Database extends SQLiteOpenHelper {
 
         StringBuilder selection = new StringBuilder();
 
+        int num = 5000;
+
         if (!filterTitle.equals("")) {
             if (filterTitle.startsWith("AR:"))
                 selection.append(column.artist.name()).append(" LIKE \'%").append(filterTitle.replace("AR:", "")).append("%\'");
@@ -166,7 +170,14 @@ public class Database extends SQLiteOpenHelper {
                 selection.append(column.album.name()).append(" LIKE \'%").append(filterTitle.replace("AL:", "")).append("%\'");
             else if (filterTitle.startsWith("GE:"))
                 selection.append(column.genre.name()).append(" LIKE \'%").append(filterTitle.replace("GE:", "")).append("%\'");
-            else
+            else if (filterTitle.startsWith("NU:")) {
+                if (filterTitle.length() == 5)
+                    try {
+                        num = Integer.parseInt(String.valueOf(filterTitle.charAt(3)) + filterTitle.charAt(4));
+                    } catch (NumberFormatException e) {
+                        e.printStackTrace();
+                    }
+            } else
                 selection.append(column.title.name()).append(" LIKE \'%").append(filterTitle).append("%\'");
         }
 
@@ -180,13 +191,15 @@ public class Database extends SQLiteOpenHelper {
             selection.append(column.uuid.name()).append(" NOT IN (SELECT ").append(downloadsColumn.uuid.name()).append(" FROM ").append(TABLE_DOWNLOAD).append(")");
         }
 
-        String orderBy = null;
+        String orderBy;
         if (order == 1)
             orderBy = column.artist.name();
         else if (order == 2)
             orderBy = column.album.name();
         else if (order == 3)
             orderBy = column.genre.name();
+        else if (order == 4)
+            orderBy = column.creationTimestamp.name();
         else
             orderBy = column.title.name();
 
@@ -198,12 +211,14 @@ public class Database extends SQLiteOpenHelper {
         Cursor cursor = db.query(TABLE_TRACKS, columns, selection.toString(), null, null, null, orderBy);
 
         if (cursor != null && cursor.moveToFirst()) {
+            int x = 0;
             do {
                 Long milliseconds = Long.parseLong(cursor.getString(4));
                 ret.add(new MusicItem(cursor.getString(0), cursor.getString(1), cursor.getString(2), cursor.getString(3),
                         String.format("%02d:%02d ", TimeUnit.MILLISECONDS.toMinutes(milliseconds), TimeUnit.MILLISECONDS.toSeconds(milliseconds) -
                                 TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milliseconds)))));
-            } while (cursor.moveToNext());
+                ++x;
+            } while (cursor.moveToNext() && x < num);
         }
 
         try {
