@@ -68,8 +68,7 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
         MusicItem musicItems = convertList.get(position);
 
         holder.title.setText(musicItems.getTitle());
-        holder.album.setText(musicItems.getAlbum());
-        holder.artist.setText(musicItems.getArtist());
+        holder.artist_album.setText(musicItems.getAlbum() + " - " + musicItems.getArtist());
         holder.time.setText(musicItems.getDuration());
         holder.albumArt.setImageBitmap(null);
 
@@ -106,7 +105,7 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
     }
 
     class MyViewHolder extends RecyclerView.ViewHolder {
-        TextView title, artist, album, time;
+        TextView title, artist_album, time;
         CardView status;
         ImageView albumArt;
 
@@ -133,8 +132,7 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MyViewHolder
             });
 
             title = view.findViewById(R.id.title);
-            artist = view.findViewById(R.id.artist);
-            album = view.findViewById(R.id.album);
+            artist_album = view.findViewById(R.id.artist_album);
             albumArt = view.findViewById(R.id.thumb);
             time = view.findViewById(R.id.time);
             status = view.findViewById(R.id.status_card);

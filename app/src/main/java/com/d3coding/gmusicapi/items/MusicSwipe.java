@@ -8,21 +8,26 @@ import android.graphics.drawable.Drawable;
 import android.view.View;
 
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.d3coding.gmusicapi.R;
 
-public class MusicSwipe extends ItemTouchHelper.SimpleCallback {
+public class MusicSwipe extends ItemTouchHelper.Callback {
     private MusicAdapter mAdapter;
 
     private Drawable icon_download;
     private Drawable icon_play;
     private ColorDrawable background;
 
+    @Override
+    public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+        return makeFlag(ItemTouchHelper.ACTION_STATE_SWIPE, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT);
+    }
+
     public MusicSwipe(MusicAdapter adapter, Context context) {
-        super(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT);
         mAdapter = adapter;
         icon_play = ContextCompat.getDrawable(context, R.drawable.ic_play);
         icon_download = ContextCompat.getDrawable(context, R.drawable.ic_download);
@@ -41,12 +46,16 @@ public class MusicSwipe extends ItemTouchHelper.SimpleCallback {
         mAdapter.notifyItemChanged(position);
     }
 
-
     @Override
     public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
         super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
         View itemView = viewHolder.itemView;
         int backgroundCornerOffset = 20;
+
+        CardView cardView = itemView.findViewById(R.id.card_view);
+
+        cardView.setRadius(4);
+        cardView.setCardElevation(4);
 
         if (dX > 0) { // Swiping to the right
             int iconMargin = (itemView.getHeight() - icon_play.getIntrinsicHeight()) / 2;
@@ -74,7 +83,11 @@ public class MusicSwipe extends ItemTouchHelper.SimpleCallback {
             background.setColor(Color.rgb(165, 123, 187));
             background.draw(c);
             icon_download.draw(c);
-        } else { // view is unSwiped
+        }
+        if (dX == 0) {
+            cardView.setRadius(0);
+            cardView.setCardElevation(0);
+            // view is unSwiped
             background.setBounds(0, 0, 0, 0);
             background.draw(c);
         }

@@ -86,9 +86,7 @@
     <string name="act_info">Info</string>
 
     <string name="item_title">title</string>
-    <string name="item_artist">artist</string>
-    <string name="item_separator">-</string>
-    <string name="item_album">album</string>
+    <string name="item_artist_album">artist - album</string>
     <string name="item_duration">duration</string>
     <string name="item_status">status</string>
 
