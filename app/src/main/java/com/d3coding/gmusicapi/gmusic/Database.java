@@ -5,8 +5,10 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import com.d3coding.gmusicapi.items.MusicItem;
+import com.d3coding.gmusicapi.items.PlaylistItem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,11 +19,13 @@ public class Database extends SQLiteOpenHelper {
     public static final String DATABASE_NAME = "TrackMetadata.db";
     private static final String TABLE_TRACKS = "tracks";
     private static final String TABLE_DOWNLOAD = "downloads";
+    private static final String TABLE_PLAYLIST = "play";
+    private static final String TABLE_PLAYLIST_C = "play_c";
     private static final String SQL_CREATE_TABLE_DOWNLOAD = "CREATE TABLE " + TABLE_DOWNLOAD + " ( " +
             downloadsColumn.id.name() + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
             downloadsColumn.uuid.name() + " TEXT NOT NULL, " +
             downloadsColumn.downloadTimestamp.name() + " INTEGER );";
-    private static final int DATABASE_VERSION = 7;
+    private static final int DATABASE_VERSION = 8;
     private static final String TYPE_TEXT = " TEXT, ";
     private static final String TYPE_INTEGER = " INTEGER, ";
     private static final String SQL_CREATE_TABLE_TRACKS = "CREATE TABLE " + TABLE_TRACKS + " ( " +
@@ -43,6 +47,17 @@ public class Database extends SQLiteOpenHelper {
             column.comment.name() + TYPE_TEXT +
             column.creationTimestamp.name() + TYPE_TEXT +
             column.totalTrackCount.name() + " INTEGER );";
+
+    private static final String SQL_CREATE_TABLE_PLAYLIST_C = "CREATE TABLE " + TABLE_PLAYLIST_C + " ( " +
+            column.id.name() + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
+            "playlist_id" + TYPE_TEXT +
+            "music_id" + " TEXT );";
+
+    private static final String SQL_CREATE_TABLE_PLAYLIST = "CREATE TABLE " + TABLE_PLAYLIST + " ( " +
+            column.id.name() + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
+            "playlist_id" + TYPE_TEXT +
+            "playlist_name" + " TEXT );";
+
     private static final String SQL_DELETE_POSTS = "DROP TABLE IF EXISTS ";
 
     public Database(Context context) {
@@ -52,12 +67,16 @@ public class Database extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_TABLE_TRACKS);
         db.execSQL(SQL_CREATE_TABLE_DOWNLOAD);
+        db.execSQL(SQL_CREATE_TABLE_PLAYLIST_C);
+        db.execSQL(SQL_CREATE_TABLE_PLAYLIST);
     }
 
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // TODO: updateDB
         db.execSQL(SQL_DELETE_POSTS + TABLE_TRACKS);
         db.execSQL(SQL_DELETE_POSTS + TABLE_DOWNLOAD);
+        db.execSQL(SQL_DELETE_POSTS + TABLE_PLAYLIST);
+        db.execSQL(SQL_DELETE_POSTS + TABLE_PLAYLIST_C);
         onCreate(db);
     }
 
@@ -85,6 +104,24 @@ public class Database extends SQLiteOpenHelper {
 
             db.insert(TABLE_TRACKS, null, values);
         }
+        db.close();
+    }
+
+    public void insertPlaylist(String id, String title) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("playlist_id", id);
+        values.put("playlist_name", title);
+        db.insert(TABLE_PLAYLIST, null, values);
+        db.close();
+    }
+
+    public void insertPlaylistContent(String playlist_id, String music_id) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("playlist_id", playlist_id);
+        values.put("music_id", music_id);
+        db.insert(TABLE_PLAYLIST_C, null, values);
         db.close();
     }
 
@@ -152,7 +189,7 @@ public class Database extends SQLiteOpenHelper {
         return ret;
     }
 
-    public List<MusicItem> getMusicItems(int order, int sortOnline, String filterTitle, boolean desc) {
+    public List<MusicItem> getMusicItems(int order, int sortOnline, String filterTitle, boolean desc, String extra) {
         List<MusicItem> ret = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -208,6 +245,15 @@ public class Database extends SQLiteOpenHelper {
         else
             orderBy += " ASC";
 
+        if (!extra.equals("")) {
+            if (selection.length() > 0)
+                selection.append(" AND ");
+            selection.append(downloadsColumn.uuid.name()).append(" IN (SELECT ").append("music_id").append(" FROM ").append(TABLE_PLAYLIST_C).append(" WHERE playlist_id = \'").append(extra).append("\')");
+            //selection.append(downloadsColumn.uuid.name()).append(" IN (SELECT ").append("music_id").append(" FROM ").append(TABLE_PLAYLIST_C).append(")");
+        }
+
+        Log.i("SELECTION:", selection.toString());
+
         Cursor cursor = db.query(TABLE_TRACKS, columns, selection.toString(), null, null, null, orderBy);
 
         if (cursor != null && cursor.moveToFirst()) {
@@ -262,6 +308,33 @@ public class Database extends SQLiteOpenHelper {
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
+        return ret;
+    }
+
+    public List<PlaylistItem> getPlaylists() {
+
+        List<PlaylistItem> ret = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String[] columns = {"playlist_name", "playlist_id"};
+
+        Cursor cursor = db.query(TABLE_PLAYLIST, columns, null, null, null, null, null);
+
+        if (cursor != null && cursor.moveToFirst()) {
+
+            do {
+                ret.add(new PlaylistItem(cursor.getString(0), cursor.getString(1)));
+            } while (cursor.moveToNext());
+        }
+
+        try {
+            db.close();
+            cursor.close();
+        } catch (
+                NullPointerException e) {
+            e.printStackTrace();
+        }
+
         return ret;
     }
 

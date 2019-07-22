@@ -7,7 +7,10 @@ import android.widget.Toast;
 
 import com.d3coding.gmusicapi.R;
 import com.github.felixgail.gplaymusic.api.GPlayMusic;
+import com.github.felixgail.gplaymusic.api.PlaylistApi;
 import com.github.felixgail.gplaymusic.api.TrackApi;
+import com.github.felixgail.gplaymusic.model.Playlist;
+import com.github.felixgail.gplaymusic.model.PlaylistEntry;
 import com.github.felixgail.gplaymusic.model.Track;
 import com.github.felixgail.gplaymusic.model.snippets.ArtRef;
 import com.github.felixgail.gplaymusic.util.TokenProvider;
@@ -45,11 +48,22 @@ public class Network extends AsyncTask<String, Void, Void> {
 
             GPlayMusic api = new GPlayMusic.Builder().setAuthToken(authToken).build();
             TrackApi trackApi = api.getTrackApi();
+            PlaylistApi playlistApi = api.getPlaylistApi();
             List<Track> listTrack = trackApi.getLibraryTracks();
+            List<Playlist> listPlaylist = playlistApi.listPlaylists();
 
             System.out.println("Database size: " + listTrack.size());
 
             List<Database.TrackMetadata> chunkList = new ArrayList<>();
+
+            Database db = new Database(context);
+
+            for (Playlist playlist : listPlaylist) {
+                db.insertPlaylist(playlist.getId(), playlist.getName());
+                List<PlaylistEntry> playlistEntryList = playlist.getContents(1000);
+                for (PlaylistEntry entry : playlistEntryList)
+                    db.insertPlaylistContent(playlist.getId(), entry.getTrackId());
+            }
 
             for (Track track : listTrack) {
                 Database.TrackMetadata trackMetadata = new Database.TrackMetadata();
@@ -122,7 +136,7 @@ public class Network extends AsyncTask<String, Void, Void> {
                 chunkList.add(trackMetadata);
             }
 
-            new Database(context).insertByTrackMetadata(chunkList);
+            db.insertByTrackMetadata(chunkList);
 
             synchronized (this) {
                 ((Activity) context).runOnUiThread(() -> Toast.makeText(context, "Database info download complete...", Toast.LENGTH_LONG).show());

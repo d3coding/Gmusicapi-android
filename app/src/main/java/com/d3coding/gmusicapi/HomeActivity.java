@@ -69,50 +69,58 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             toggle.syncState();
             navigationView.setNavigationItemSelectedListener(this);
 
-            swapAndSetupFragment(new HomeFragment());
+            swapAndSetupFragment(new HomeFragment(""));
 
         } else
             startActivityForResult(new Intent(this, LoginActivity.class), Config.LOGIN_ACTIVITY);
 
     }
 
-    void swapAndSetupFragment(Fragment fragment) {
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_content, fragment).commit();
-        getSupportFragmentManager().executePendingTransactions();
+    Fragment swapAndSetupFragment(Fragment fragment) {
+        synchronized (this) {
+            this.runOnUiThread(() -> {
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_content, fragment).commit();
+                getSupportFragmentManager().executePendingTransactions();
 
-        if (fragment.getClass() == HomeFragment.class) {
+                if (fragment.getClass() == HomeFragment.class) {
 
-            fab.setOnClickListener((v) -> {
-                Bundle bundle = null;
-                HomeFragment homeFragment = (HomeFragment) getFragment(HomeFragment.class);
-                if (homeFragment != null)
-                    bundle = homeFragment.getBundle();
-                FilterFragment filterFragment = FilterFragment.newInstance(bundle);
-                filterFragment.show(getSupportFragmentManager(), "filter_fragment");
+                    fab.setOnClickListener((v) -> {
+                        Bundle bundle = null;
+                        HomeFragment homeFragment = (HomeFragment) getFragment(HomeFragment.class);
+                        if (homeFragment != null)
+                            bundle = homeFragment.getBundle();
+                        FilterFragment filterFragment = FilterFragment.newInstance(bundle);
+                        filterFragment.show(getSupportFragmentManager(), "filter_fragment");
 
-                filterFragment.setOnResultListener((result) -> {
-                    HomeFragment newHomeFragment = (HomeFragment) getFragment(HomeFragment.class);
-                    if (newHomeFragment != null)
-                        newHomeFragment.setBundle(result);
-                });
-            });
+                        filterFragment.setOnResultListener((result) -> {
+                            HomeFragment newHomeFragment = (HomeFragment) getFragment(HomeFragment.class);
+                            if (newHomeFragment != null)
+                                newHomeFragment.setBundle(result);
+                        });
+                    });
 
-            ((HomeFragment) fragment).addOnScrollListener(new RecyclerView.OnScrollListener() {
-                @Override
-                public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                    super.onScrollStateChanged(recyclerView, newState);
-                    if (!recyclerView.canScrollVertically(1))
-                        fab.hide();
-                    else if (!fab.isExpanded()) {
-                        fab.show();
-                        fab.setCompatElevation(10);
-                    }
+                    ((HomeFragment) fragment).addOnScrollListener(new RecyclerView.OnScrollListener() {
+                        @Override
+                        public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                            super.onScrollStateChanged(recyclerView, newState);
+                            if (!recyclerView.canScrollVertically(1))
+                                fab.hide();
+                            else if (!fab.isExpanded()) {
+                                fab.show();
+                                fab.setCompatElevation(10);
+                            }
+                        }
+                    });
+
+                } else if (fragment.getClass() == PlaylistFragment.class) {
+                    fab.setOnClickListener(null);
+                    fab.hide();
+                    ((PlaylistFragment) fragment).setOnClickListener((name) -> swapAndSetupFragment(new HomeFragment(name)));
                 }
             });
+        }
 
-        } else if (fragment.getClass() == PlaylistFragment.class)
-            fab.setOnClickListener(null);
-
+        return fragment;
 
         // TODO: reInflateOptionsMenuAccordingToFragment
     }
@@ -195,7 +203,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
         } else if (id == R.id.action_clean_db) {
             deleteDatabase(Database.DATABASE_NAME);
-            swapAndSetupFragment(new HomeFragment());
+            swapAndSetupFragment(new HomeFragment(""));
             return true;
         } else if (id == R.id.action_refresh_db) {
             HomeFragment homeFragment = (HomeFragment) getFragment(HomeFragment.class);
@@ -205,7 +213,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
             return true;
         } else if (id == R.id.action_recreate)
-            swapAndSetupFragment(new HomeFragment());
+            swapAndSetupFragment(new HomeFragment(""));
 
         return super.onOptionsItemSelected(item);
     }
@@ -240,7 +248,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         int id = menuItem.getItemId();
 
         if (id == R.id.nav_all)
-            swapAndSetupFragment(new HomeFragment());
+            swapAndSetupFragment(new HomeFragment(""));
         else if (id == R.id.nav_playlist)
             swapAndSetupFragment(new PlaylistFragment());
         else if (id == R.id.nav_settings)

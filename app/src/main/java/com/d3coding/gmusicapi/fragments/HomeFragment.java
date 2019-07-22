@@ -67,6 +67,12 @@ public class HomeFragment extends Fragment {
 
     private ThreadPoolExecutor downloadQueueService;
 
+    String extra;
+
+    public HomeFragment(String extra) {
+        this.extra = extra;
+    }
+
     public void addOnScrollListener(RecyclerView.OnScrollListener mOnScrollListener) {
         this.mOnScrollListener = mOnScrollListener;
         if (recyclerView != null)
@@ -206,6 +212,12 @@ public class HomeFragment extends Fragment {
             downloadQueueService.execute(() -> mDownload.getQueue(musicItem.getUUID()));
     }
 
+    public void setPlaylist(String name) {
+        Log.i("PLAYLIST:", name);
+        extra = name;
+        updateList();
+    }
+
     public int getNumItems() {
         return ConvertList.size();
     }
@@ -237,9 +249,9 @@ public class HomeFragment extends Fragment {
             db = new Database(getContext());
 
         ConvertList.clear();
-        ConvertList.addAll(db.getMusicItems(sort, sortOnline, filterText, desc));
+        ConvertList.addAll(db.getMusicItems(sort, sortOnline, filterText, desc, extra));
         mAdapter.notifyDataSetChanged();
-
+        extra = "";
         recyclerView.startLayoutAnimation();
     }
 
