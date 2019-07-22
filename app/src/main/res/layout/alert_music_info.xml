@@ -32,7 +32,7 @@
             android:layout_marginEnd="8dp"
             android:layout_marginBottom="10dp"
             android:background="@drawable/title_card"
-            android:text="dfsdf"
+            android:text="Music Title"
             android:textSize="22sp"
             android:textStyle="bold" />
 

@@ -1,6 +1,7 @@
 package com.d3coding.gmusicapi.fragments;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -14,11 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
-import android.widget.ArrayAdapter;
-import android.widget.CheckBox;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -37,6 +34,7 @@ import com.d3coding.gmusicapi.Config;
 import com.d3coding.gmusicapi.R;
 import com.d3coding.gmusicapi.gmusic.Database;
 import com.d3coding.gmusicapi.gmusic.Download;
+import com.d3coding.gmusicapi.gmusic.Network;
 import com.d3coding.gmusicapi.items.MusicAdapter;
 import com.d3coding.gmusicapi.items.MusicItem;
 import com.d3coding.gmusicapi.items.MusicSwipe;
@@ -45,9 +43,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 public class HomeFragment extends Fragment {
 
@@ -65,6 +61,7 @@ public class HomeFragment extends Fragment {
     private RecyclerView recyclerView;
 
     private Download mDownload;
+    private Network mNetwork;
 
     private RecyclerView.OnScrollListener mOnScrollListener;
 
@@ -82,6 +79,7 @@ public class HomeFragment extends Fragment {
 
         recyclerView = layoutView.findViewById(R.id.items);
         mDownload = new Download(getContext());
+        mNetwork = new Network(getContext());
         mAdapter = new MusicAdapter(ConvertList);
 
         mAdapter.setOnDownloadItem((UUID) -> {
@@ -109,6 +107,13 @@ public class HomeFragment extends Fragment {
         updateList();
 
         new Thread(() -> {
+
+            //if (!mPresets.contains(getString(R.string.last_update))) {
+            //                    HomeFragment homeFragment = (HomeFragment) getFragment(HomeFragment.class);
+            //                    if (homeFragment != null)
+            //                        homeFragment.refreshDB();
+            //                }
+
             Log.i("Checkup", "Started");
             List<String> offline = new ArrayList<>();
             List<String> online = new ArrayList<>();
@@ -130,7 +135,6 @@ public class HomeFragment extends Fragment {
             Log.i("Checkup", "Finished");
         }).start();
 
-
         mAdapter.setOnItemClickListener((view, position) -> {
 
             Bitmap bitmap = mDownload.getBitmapThumbImage(ConvertList.get(position).getUUID());
@@ -139,7 +143,7 @@ public class HomeFragment extends Fragment {
 
             AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
 
-            ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.ad_music_info, null);
+            ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.alert_music_info, null);
 
             ((ImageView) vView.findViewById(R.id.info_albumArt)).setImageBitmap(bitmap);
             Palette p = Palette.from(bitmap).generate();
@@ -157,80 +161,19 @@ public class HomeFragment extends Fragment {
             ((TextView) vView.findViewById(R.id.info_time)).setText(ConvertList.get(position).getDuration());
 
             builder.setView(vView).create().show();
-
         });
 
-        mAdapter.setOnItemLongClickListener((view, position) -> {
-            MusicItem musicItem = ConvertList.get(position);
+    }
 
-            Bitmap bitmap = mDownload.getBitmapThumbImage(musicItem.getUUID());
-            if (bitmap == null)
-                bitmap = mDownload.getDefaultThumb();
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-            ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.ad_music_opt, null);
-
-            LinearLayout linearComplete = vView.findViewById(R.id.status_complete),
-                    linearDownloading = vView.findViewById(R.id.status_downloading);
-
-            ((ImageView) vView.findViewById(R.id.opt_album_art)).setImageBitmap(bitmap);
-            ((TextView) vView.findViewById(R.id.opt_title)).setText(musicItem.getTitle());
-            ((TextView) vView.findViewById(R.id.opt_artist)).setText(musicItem.getArtist());
-
-            if (db.countDownloadsByUUID(musicItem.getUUID()) > 0) {
-                linearComplete.setVisibility(View.VISIBLE);
-                linearDownloading.setVisibility(View.GONE);
-            } else {
-                // TODO: CheckNetwork
-                linearComplete.setVisibility(View.GONE);
-                linearDownloading.setVisibility(View.VISIBLE);
-
-                initThreads();
-
-                downloadQueueService.execute(() -> {
-                    if (mDownload.getQueue(musicItem.getUUID()) != 0) {
-                        synchronized (this) {
-                            ((Activity) getContext()).runOnUiThread(() -> {
-                                linearComplete.setVisibility(View.VISIBLE);
-                                linearDownloading.setVisibility(View.GONE);
-                                mAdapter.notifyItemChanged(position);
-                            });
-                        }
-                    } else
-                        Log.e("DownloadQueueThread", "Finished with error");
-                });
-
-                // TODO: getDownloadStatus
-
-                final ScheduledExecutorService exec = Executors.newScheduledThreadPool(1);
-
-                exec.scheduleAtFixedRate(() -> {
-                    Download.Progress progress = mDownload.getQueueStatus(musicItem.getUUID());
-
-                    if (progress.percentage <= 100)
-                        Log.i("Progress:", String.valueOf(progress.percentage));
-
-                    if (progress.doing == Download.Doing.completed)
-                        exec.shutdown();
-                }, 0, 1, TimeUnit.MILLISECONDS);
-
-                builder.setOnCancelListener((dialog) -> exec.shutdown());
-            }
-
-            vView.findViewById(R.id.opt_bt_play).setOnClickListener((view2) -> openFile(musicItem.getUUID()));
-            vView.findViewById(R.id.opt_bt_open).setOnClickListener((view2) -> openFolder());
-            vView.findViewById(R.id.opt_bt_delete).setOnClickListener((view2) -> Toast.makeText(getContext(), getString(R.string.null_description), Toast.LENGTH_SHORT).show());
-
-            builder.setView(vView).create().show();
-
-        });
-
+    public void refreshDB() {
+        getContext().deleteDatabase(Database.DATABASE_NAME);
+        mNetwork.execute(getContext().getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE).getString(getString(R.string.token), ""));
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.frag_items, container, false);
+        return inflater.inflate(R.layout.fragment_home, container, false);
     }
 
     boolean openFile(String UUID) {
@@ -267,34 +210,24 @@ public class HomeFragment extends Fragment {
         return ConvertList.size();
     }
 
-    public void showFilter() {
-
-        ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.ad_filter, null);
-        Spinner spinner_organize = vView.findViewById(R.id.filter_organize);
-        Spinner spinner_filter = vView.findViewById(R.id.filter_filter);
-        ArrayAdapter<CharSequence> adapter_organize = ArrayAdapter.createFromResource(getContext(), R.array.organize_by, android.R.layout.simple_spinner_item);
-        ArrayAdapter<CharSequence> adapter_filter = ArrayAdapter.createFromResource(getContext(), R.array.filter_by, android.R.layout.simple_spinner_item);
-        adapter_organize.setDropDownViewResource(R.layout.spinner_simple_text_box);
-        adapter_filter.setDropDownViewResource(R.layout.spinner_simple_text_box);
-        spinner_organize.setAdapter(adapter_organize);
-        spinner_filter.setAdapter(adapter_filter);
-        spinner_organize.setSelection(sort);
-        spinner_filter.setSelection(sortOnline);
-
-        CheckBox checkBox = vView.findViewById(R.id.checkbox_ascend);
-        checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> desc = isChecked);
-
-        new AlertDialog.Builder(getContext(), R.style.AppTheme_AlertDialog).setPositiveButton(R.string.act_icon_filter, (dialog, which) -> {
-            sort = spinner_organize.getSelectedItemPosition();
-            sortOnline = spinner_filter.getSelectedItemPosition();
-            updateList();
-        }).setView(vView).create().show();
-
-
-    }
 
     public void filter(String filterText) {
         this.filterText = filterText;
+        updateList();
+    }
+
+    public Bundle getBundle() {
+        Bundle args = new Bundle();
+        args.putInt("sort", sort);
+        args.putInt("sort_online", sortOnline);
+        args.putBoolean("desc", desc);
+        return args;
+    }
+
+    public void setBundle(Bundle bundle) {
+        sort = bundle.getInt("sort", 0);
+        sortOnline = bundle.getInt("sort_online", 0);
+        desc = bundle.getBoolean("desc", false);
         updateList();
     }
 

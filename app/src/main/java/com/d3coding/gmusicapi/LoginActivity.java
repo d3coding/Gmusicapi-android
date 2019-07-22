@@ -79,7 +79,7 @@ public class LoginActivity extends AppCompatActivity {
                     im.hideSoftInputFromWindow(editTextPass.getWindowToken(), 0);
 
                     AlertDialog.Builder builder = new AlertDialog.Builder(LoginActivity.this);
-                    ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.ad_loading, null);
+                    ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.alert_loading, null);
                     builder.setView(vView);
                     builder.setCancelable(false);
                     final AlertDialog alert = builder.create();
@@ -99,7 +99,7 @@ public class LoginActivity extends AppCompatActivity {
                     im.hideSoftInputFromWindow(editTextPass.getWindowToken(), 0);
 
                     AlertDialog.Builder builder = new AlertDialog.Builder(LoginActivity.this);
-                    ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.ad_loading, null);
+                    ViewGroup vView = (ViewGroup) getLayoutInflater().inflate(R.layout.alert_loading, null);
                     builder.setView(vView);
                     builder.setCancelable(false);
                     final AlertDialog alert = builder.create();

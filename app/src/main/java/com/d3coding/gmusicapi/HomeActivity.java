@@ -23,10 +23,10 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.d3coding.gmusicapi.fragments.FilterFragment;
 import com.d3coding.gmusicapi.fragments.HomeFragment;
 import com.d3coding.gmusicapi.fragments.PlaylistFragment;
 import com.d3coding.gmusicapi.gmusic.Database;
-import com.d3coding.gmusicapi.gmusic.Network;
 import com.google.android.material.bottomappbar.BottomAppBar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
@@ -69,9 +69,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             toggle.syncState();
             navigationView.setNavigationItemSelectedListener(this);
 
-            if (!mPresets.contains(getString(R.string.last_update)))
-                refreshDB();
-
             swapAndSetupFragment(new HomeFragment());
 
         } else
@@ -84,7 +81,21 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         getSupportFragmentManager().executePendingTransactions();
 
         if (fragment.getClass() == HomeFragment.class) {
-            fab.setOnClickListener((v) -> ((HomeFragment) fragment).showFilter());
+
+            fab.setOnClickListener((v) -> {
+                Bundle bundle = null;
+                HomeFragment homeFragment = (HomeFragment) getFragment(HomeFragment.class);
+                if (homeFragment != null)
+                    bundle = homeFragment.getBundle();
+                FilterFragment filterFragment = FilterFragment.newInstance(bundle);
+                filterFragment.show(getSupportFragmentManager(), "filter_fragment");
+
+                filterFragment.setOnResultListener((result) -> {
+                    HomeFragment newHomeFragment = (HomeFragment) getFragment(HomeFragment.class);
+                    if (newHomeFragment != null)
+                        newHomeFragment.setBundle(result);
+                });
+            });
 
             ((HomeFragment) fragment).addOnScrollListener(new RecyclerView.OnScrollListener() {
                 @Override
@@ -99,9 +110,9 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                 }
             });
 
-        } else if (fragment.getClass() == PlaylistFragment.class) {
+        } else if (fragment.getClass() == PlaylistFragment.class)
             fab.setOnClickListener(null);
-        }
+
 
         // TODO: reInflateOptionsMenuAccordingToFragment
     }
@@ -112,44 +123,46 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         getMenuInflater().inflate(R.menu.menu_main, menu);
 
         MenuItem menuItem = menu.findItem(R.id.act_icon_search);
+        searchView = (SearchView) menuItem.getActionView();
         refreshLogItem = menu.findItem(R.id.act_icon_refresh_log);
 
-        menuItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
-            @Override
-            public boolean onMenuItemActionExpand(MenuItem item) {
-                fab.hide();
-                return true;
-            }
+        new Thread(() -> {
+            menuItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
+                @Override
+                public boolean onMenuItemActionExpand(MenuItem item) {
+                    fab.hide();
+                    return true;
+                }
 
-            @Override
-            public boolean onMenuItemActionCollapse(MenuItem item) {
-                fab.show();
-                return true;
-            }
-        });
+                @Override
+                public boolean onMenuItemActionCollapse(MenuItem item) {
+                    fab.show();
+                    return true;
+                }
+            });
 
-        searchView = (SearchView) menuItem.getActionView();
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                HomeFragment homeFragment = (HomeFragment) getFragment(HomeFragment.class);
-                if (homeFragment != null)
-                    homeFragment.filter(query);
-                return false;
-            }
 
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                HomeFragment homeFragment = (HomeFragment) getFragment(HomeFragment.class);
-                if (homeFragment != null)
-                    homeFragment.filter(newText);
-                return false;
-            }
-        });
+            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    HomeFragment homeFragment = (HomeFragment) getFragment(HomeFragment.class);
+                    if (homeFragment != null)
+                        homeFragment.filter(query);
+                    return false;
+                }
 
-        searchView.findViewById(androidx.appcompat.R.id.search_plate).setBackgroundColor(Color.TRANSPARENT);
-        ((EditText) searchView.findViewById(androidx.appcompat.R.id.search_src_text)).setHintTextColor(Color.GRAY);
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    HomeFragment homeFragment = (HomeFragment) getFragment(HomeFragment.class);
+                    if (homeFragment != null)
+                        homeFragment.filter(newText);
+                    return false;
+                }
+            });
 
+            searchView.findViewById(androidx.appcompat.R.id.search_plate).setBackgroundColor(Color.TRANSPARENT);
+            ((EditText) searchView.findViewById(androidx.appcompat.R.id.search_src_text)).setHintTextColor(Color.GRAY);
+        }).start();
         return true;
     }
 
@@ -157,12 +170,10 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     public void onBackPressed() {
         if (drawer.isDrawerOpen(GravityCompat.START))
             drawer.closeDrawer(GravityCompat.START);
-        else {
-            if (searchView.hasFocus()) {
-                searchView.setIconified(true);
-            } else
-                super.onBackPressed();
-        }
+        else if (searchView.hasFocus())
+            searchView.setIconified(true);
+        else
+            super.onBackPressed();
     }
 
     @Override
@@ -187,8 +198,11 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             swapAndSetupFragment(new HomeFragment());
             return true;
         } else if (id == R.id.action_refresh_db) {
+            HomeFragment homeFragment = (HomeFragment) getFragment(HomeFragment.class);
+            if (homeFragment != null)
+                homeFragment.refreshDB();
             refreshLogItem.setVisible(true);
-            refreshDB();
+
             return true;
         } else if (id == R.id.action_recreate)
             swapAndSetupFragment(new HomeFragment());
@@ -208,12 +222,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
         }
 
-    }
-
-    private void refreshDB() {
-        deleteDatabase(Database.DATABASE_NAME);
-        SharedPreferences mPresets = getSharedPreferences(getString(R.string.preferences_user), Context.MODE_PRIVATE);
-        new Network(this).execute(mPresets.getString(getString(R.string.token), ""));
     }
 
     private Fragment getFragment(Class mClass) {
