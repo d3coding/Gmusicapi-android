@@ -4,6 +4,8 @@
 ![](https://travis-ci.org/d3coding/Gmusicapi-android.svg?branch=master)
 
 ## Archived
+**Update:** On 4th July 2020, Google announced that they are discontinuing Google Play Music.
+
 **This project has been discontinued and may contain bugs, use at your own risk.**
 
 ### Features
